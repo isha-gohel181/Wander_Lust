@@ -1,5 +1,5 @@
-// client/src/pages/dashboard/AddProperty.jsx
-import React, { useState } from "react";
+//client/src/pages/dashboard/AddProperty.jsx
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -23,11 +23,21 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { propertyService } from "@/services/properties";
 import { uploadService } from "@/services/upload";
 import { PROPERTY_TYPES, ROOM_TYPES, AMENITIES } from "@/utils/constants";
-import { extractPublicId } from "@/utils/helpers"; // If using alias
+import { extractPublicId } from "@/utils/helpers";
 import ImageUpload from "@/components/property/ImageUpload";
+import {
+  nominatimGeocode,
+  nominatimReverseGeocode,
+  formatAddress,
+  DEFAULT_LOCATION,
+  DEFAULT_ADDRESS,
+} from "@/utils/geocoding";
+import LeafletMap from "@/components/map/LeafletMap";
+import MapError from "@/components/map/MapError";
 import toast from "react-hot-toast";
 
 const AddProperty = () => {
@@ -35,6 +45,8 @@ const AddProperty = () => {
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [mapError, setMapError] = useState(null);
+  const [geocodingInProgress, setGeocodingInProgress] = useState(false);
   const [propertyData, setPropertyData] = useState({
     title: "",
     description: "",
@@ -50,10 +62,7 @@ const AddProperty = () => {
       state: "",
       country: "",
       zipCode: "",
-      coordinates: {
-        lat: 0,
-        lng: 0,
-      },
+      coordinates: DEFAULT_LOCATION,
     },
     pricing: {
       basePrice: 50,
@@ -61,150 +70,220 @@ const AddProperty = () => {
       currency: "USD",
     },
     amenities: [],
-    images: [], // Added images array
+    images: [],
     houseRules: {
       checkInTime: "15:00",
       checkOutTime: "11:00",
       smokingAllowed: false,
       petsAllowed: false,
       partiesAllowed: false,
+      maxGuests: 1,
     },
   });
 
-  const handleInputChange = (field, value) => {
-    if (field.includes(".")) {
-      const [parent, child] = field.split(".");
+  const handleInputChange = useCallback((field, value) => {
+    setPropertyData((prev) => {
+      if (field.includes(".")) {
+        const [parent, child] = field.split(".");
+        return {
+          ...prev,
+          [parent]: {
+            ...prev[parent],
+            [child]: value,
+          },
+        };
+      }
+      return {
+        ...prev,
+        [field]: value,
+      };
+    });
+  }, []);
+
+  // Update geocoding functions
+  const handleLocationChange = useCallback(
+    async (field, value) => {
       setPropertyData((prev) => ({
         ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value,
+        location: {
+          ...prev.location,
+          [field]: value,
         },
       }));
-    } else {
+
+      if (
+        field === "address" ||
+        field === "city" ||
+        field === "state" ||
+        field === "country"
+      ) {
+        const updatedLocation = {
+          ...propertyData.location,
+          [field]: value,
+        };
+
+        if (
+          updatedLocation.address &&
+          updatedLocation.city &&
+          updatedLocation.state
+        ) {
+          setGeocodingInProgress(true);
+          try {
+            const fullAddress = formatAddress(updatedLocation);
+            const result = await nominatimGeocode(fullAddress);
+
+            setPropertyData((prev) => ({
+              ...prev,
+              location: {
+                ...prev.location,
+                coordinates: {
+                  lat: result.lat,
+                  lng: result.lng,
+                },
+              },
+            }));
+            setMapError(null);
+          } catch (error) {
+            setMapError("Unable to find location on map");
+            console.error("Geocoding error:", error);
+          } finally {
+            setGeocodingInProgress(false);
+          }
+        }
+      }
+    },
+    [propertyData.location]
+  );
+
+  const handleMarkerDragEnd = useCallback(async (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+
+    try {
+      setGeocodingInProgress(true);
+      const result = await nominatimReverseGeocode({ lat, lng });
+
       setPropertyData((prev) => ({
         ...prev,
-        [field]: value,
+        location: {
+          ...prev.location,
+          address: result.street,
+          city: result.city,
+          state: result.state,
+          country: result.country,
+          zipCode: result.zipCode,
+          coordinates: { lat, lng },
+        },
       }));
+      setMapError(null);
+    } catch (error) {
+      setMapError("Unable to find address for this location");
+      console.error("Reverse geocoding error:", error);
+    } finally {
+      setGeocodingInProgress(false);
     }
-  };
+  }, []);
 
-  const handleLocationChange = (field, value) => {
-    setPropertyData((prev) => ({
-      ...prev,
-      location: {
-        ...prev.location,
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleAmenityToggle = (amenity) => {
+  const handleAmenityToggle = useCallback((amenity) => {
     setPropertyData((prev) => ({
       ...prev,
       amenities: prev.amenities.includes(amenity)
         ? prev.amenities.filter((a) => a !== amenity)
         : [...prev.amenities, amenity],
     }));
-  };
+  }, []);
 
-  const handleImagesChange = (images) => {
+  const handleImagesChange = useCallback((images) => {
     setPropertyData((prev) => ({
       ...prev,
-      images: images,
+      images,
     }));
-  };
+  }, []);
 
-  // Enhanced validation function
-  const validatePropertyData = (data) => {
-    const errors = [];
+  const validateStep = (step) => {
+    switch (step) {
+      case 1:
+        if (!propertyData.title || propertyData.title.length < 5) {
+          toast.error("Title must be at least 5 characters long");
+          return false;
+        }
+        if (!propertyData.description || propertyData.description.length < 50) {
+          toast.error("Description must be at least 50 characters");
+          return false;
+        }
+        if (!propertyData.propertyType || !propertyData.roomType) {
+          toast.error("Please select property and room type");
+          return false;
+        }
+        break;
 
-    // Basic info validation
-    if (!data.title || data.title.trim().length < 5) {
-      errors.push("Title must be at least 5 characters long");
-    }
-    if (!data.description || data.description.trim().length < 50) {
-      errors.push("Description must be at least 50 characters long");
-    }
-    if (!data.propertyType) {
-      errors.push("Property type is required");
-    }
-    if (!data.roomType) {
-      errors.push("Room type is required");
-    }
+      case 2:
+        if (
+          !propertyData.location.address ||
+          !propertyData.location.city ||
+          !propertyData.location.state ||
+          !propertyData.location.country ||
+          !propertyData.location.zipCode
+        ) {
+          toast.error("Please fill in all location fields");
+          return false;
+        }
+        break;
 
-    // Location validation
-    if (!data.location.address?.trim()) {
-      errors.push("Address is required");
-    }
-    if (!data.location.city?.trim()) {
-      errors.push("City is required");
-    }
-    if (!data.location.state?.trim()) {
-      errors.push("State is required");
-    }
-    if (!data.location.country?.trim()) {
-      errors.push("Country is required");
-    }
-    if (!data.location.zipCode?.trim()) {
-      errors.push("ZIP code is required");
-    }
+      case 3:
+        if (
+          propertyData.accommodates < 1 ||
+          propertyData.bedrooms < 0 ||
+          propertyData.bathrooms < 0.5 ||
+          propertyData.beds < 1
+        ) {
+          toast.error("Please enter valid numbers for accommodation details");
+          return false;
+        }
+        break;
 
-    // Numeric validation
-    if (isNaN(data.accommodates) || data.accommodates < 1) {
-      errors.push("Number of guests must be at least 1");
-    }
-    if (isNaN(data.bedrooms) || data.bedrooms < 0) {
-      errors.push("Bedrooms must be 0 or more");
-    }
-    if (isNaN(data.bathrooms) || data.bathrooms < 0.5) {
-      errors.push("Bathrooms must be at least 0.5");
-    }
-    if (isNaN(data.beds) || data.beds < 1) {
-      errors.push("Number of beds must be at least 1");
-    }
-    if (isNaN(data.pricing.basePrice) || data.pricing.basePrice < 1) {
-      errors.push("Base price must be at least $1");
-    }
+      case 4:
+        if (!propertyData.images.length) {
+          toast.error("Please add at least one image");
+          return false;
+        }
+        break;
 
-    // Image validation
-    if (!data.images || data.images.length < 1) {
-      errors.push("At least 1 property image is required");
+      case 5:
+        if (propertyData.pricing.basePrice < 1) {
+          toast.error("Base price must be at least $1");
+          return false;
+        }
+        break;
     }
-
-    return errors;
+    return true;
   };
 
   const uploadImages = async (images) => {
     if (!images || images.length === 0) return [];
 
     try {
-      // Filter only new images that haven't been uploaded
       const imagesToUpload = images.filter((img) => img.file && !img.uploaded);
 
       if (imagesToUpload.length === 0) {
         return images.filter((img) => img.uploaded).map((img) => img.url);
       }
 
-      // Compress images before upload
       const compressedImages = await Promise.all(
         imagesToUpload.map(async (img) => {
           if (img.file.size > 1024 * 1024) {
-            // If larger than 1MB
             return await uploadService.compressImage(img.file);
           }
           return img.file;
         })
       );
 
-      // Upload with progress tracking
       const uploadResponse = await uploadService.uploadImagesWithProgress(
         compressedImages,
         "properties",
         setUploadProgress
       );
 
-      // Return all image URLs (existing + newly uploaded)
       const existingUrls = images
         .filter((img) => img.uploaded)
         .map((img) => img.url);
@@ -216,10 +295,12 @@ const AddProperty = () => {
   };
 
   const handleSubmit = async () => {
-    // Validate data before submission
-    const validationErrors = validatePropertyData(propertyData);
-    if (validationErrors.length > 0) {
-      validationErrors.forEach((error) => toast.error(error));
+    if (!validateStep(currentStep)) {
+      return;
+    }
+
+    if (currentStep < steps.length) {
+      setCurrentStep((prev) => prev + 1);
       return;
     }
 
@@ -227,15 +308,12 @@ const AddProperty = () => {
     setUploadProgress(0);
 
     try {
-      // Upload images first
-      toast.loading("Uploading images...", { id: "upload" });
-      const imageUrls = await uploadImages(propertyData.images);
-      toast.success("Images uploaded successfully!", { id: "upload" });
+      toast.loading("Creating your property listing...");
 
-      // Prepare property data
-      const propertyWithCoords = {
+      const imageUrls = await uploadImages(propertyData.images);
+
+      const propertyPayload = {
         ...propertyData,
-        // Ensure numeric fields are numbers, not strings
         accommodates: Number(propertyData.accommodates),
         bedrooms: Number(propertyData.bedrooms),
         bathrooms: Number(propertyData.bathrooms),
@@ -245,27 +323,18 @@ const AddProperty = () => {
           basePrice: Number(propertyData.pricing.basePrice),
           cleaningFee: Number(propertyData.pricing.cleaningFee || 0),
         },
-        location: {
-          ...propertyData.location,
-          coordinates: {
-            lat: 40.7128, // Default to NYC for demo
-            lng: -74.006,
-          },
-        },
         images: imageUrls.map((url, index) => ({
           url,
-          publicId: extractPublicId(url), // ✅ We'll define this function below
-          isPrimary: index === 0, // First image is primary
+          publicId: extractPublicId(url),
+          isPrimary: index === 0,
         })),
       };
 
-      console.log("🚀 Submitting property data:", propertyWithCoords);
-
-      await propertyService.createProperty(propertyWithCoords);
+      await propertyService.createProperty(propertyPayload);
       toast.success("Property created successfully!");
       navigate("/dashboard/properties");
     } catch (error) {
-      console.error("❌ Error creating property:", error);
+      console.error("Error creating property:", error);
       toast.error(error.message || "Failed to create property");
     } finally {
       setLoading(false);
@@ -427,6 +496,29 @@ const AddProperty = () => {
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <Label>Pin Location on Map</Label>
+              <div className="h-[400px] rounded-lg overflow-hidden mt-2 relative">
+                <LeafletMap
+                  center={propertyData.location.coordinates}
+                  markerPosition={propertyData.location.coordinates}
+                  onMarkerDragEnd={handleMarkerDragEnd}
+                  draggable={true}
+                  zoom={13}
+                />
+                {geocodingInProgress && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="text-white">Updating location...</div>
+                  </div>
+                )}
+              </div>
+              {mapError && (
+                <Alert variant="destructive" className="mt-2">
+                  <AlertDescription>{mapError}</AlertDescription>
+                </Alert>
+              )}
             </div>
           </div>
         );
@@ -594,13 +686,7 @@ const AddProperty = () => {
                     id="smokingAllowed"
                     checked={propertyData.houseRules.smokingAllowed}
                     onCheckedChange={(checked) =>
-                      setPropertyData((prev) => ({
-                        ...prev,
-                        houseRules: {
-                          ...prev.houseRules,
-                          smokingAllowed: checked,
-                        },
-                      }))
+                      handleInputChange("houseRules.smokingAllowed", checked)
                     }
                   />
                   <Label htmlFor="smokingAllowed">Smoking allowed</Label>
@@ -610,13 +696,7 @@ const AddProperty = () => {
                     id="petsAllowed"
                     checked={propertyData.houseRules.petsAllowed}
                     onCheckedChange={(checked) =>
-                      setPropertyData((prev) => ({
-                        ...prev,
-                        houseRules: {
-                          ...prev.houseRules,
-                          petsAllowed: checked,
-                        },
-                      }))
+                      handleInputChange("houseRules.petsAllowed", checked)
                     }
                   />
                   <Label htmlFor="petsAllowed">Pets allowed</Label>
@@ -626,13 +706,7 @@ const AddProperty = () => {
                     id="partiesAllowed"
                     checked={propertyData.houseRules.partiesAllowed}
                     onCheckedChange={(checked) =>
-                      setPropertyData((prev) => ({
-                        ...prev,
-                        houseRules: {
-                          ...prev.houseRules,
-                          partiesAllowed: checked,
-                        },
-                      }))
+                      handleInputChange("houseRules.partiesAllowed", checked)
                     }
                   />
                   <Label htmlFor="partiesAllowed">Parties/events allowed</Label>
@@ -737,26 +811,17 @@ const AddProperty = () => {
           Previous
         </Button>
 
-        <div className="flex space-x-4">
-          {currentStep < steps.length ? (
-            <Button
-              onClick={() =>
-                setCurrentStep(Math.min(steps.length, currentStep + 1))
-              }
-              className="bg-wanderlust-600 hover:bg-wanderlust-700"
-            >
-              Next
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="bg-wanderlust-600 hover:bg-wanderlust-700"
-            >
-              {loading ? "Creating Property..." : "Create Property"}
-            </Button>
-          )}
-        </div>
+        <Button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="bg-wanderlust-600 hover:bg-wanderlust-700"
+        >
+          {currentStep < steps.length
+            ? "Next"
+            : loading
+            ? "Creating Property..."
+            : "Create Property"}
+        </Button>
       </div>
     </div>
   );

@@ -29,7 +29,14 @@ const Search = () => {
     checkIn: searchParams.get("checkIn") || "",
     checkOut: searchParams.get("checkOut") || "",
     guests: searchParams.get("guests") || "",
-    ...filters,
+    // Map the filter structure to what useProperties expects
+    propertyType: [],
+    roomType: [],
+    minPrice: 0,
+    maxPrice: 1000,
+    bedrooms: 0,
+    bathrooms: 0,
+    amenities: [],
   };
 
   const { properties, loading, pagination, updateFilters, loadMore } =
@@ -50,18 +57,39 @@ const Search = () => {
 
   const handleFiltersUpdate = (newFilters) => {
     setFilters(newFilters);
-    updateFilters(newFilters);
+
+    // Convert filter structure for useProperties hook
+    const propertyFilters = {
+      ...newFilters,
+      minPrice: newFilters.priceRange ? newFilters.priceRange[0] : 0,
+      maxPrice: newFilters.priceRange ? newFilters.priceRange[1] : 1000,
+    };
+
+    // Remove priceRange as it's converted to minPrice/maxPrice
+    delete propertyFilters.priceRange;
+
+    updateFilters(propertyFilters);
   };
 
   const getActiveFiltersCount = () => {
-    let count = 0;
-    if (filters.propertyType.length > 0) count++;
-    if (filters.roomType.length > 0) count++;
-    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 1000) count++;
-    if (filters.bedrooms > 0) count++;
-    if (filters.bathrooms > 0) count++;
-    if (filters.amenities.length > 0) count++;
-    return count;
+    // Ensure all properties exist with defaults
+    const {
+      propertyType = [],
+      roomType = [],
+      amenities = [],
+      priceRange = [0, 1000],
+      bedrooms = 0,
+      bathrooms = 0,
+    } = filters || {};
+
+    return (
+      propertyType.length +
+      roomType.length +
+      amenities.length +
+      (bedrooms > 0 ? 1 : 0) +
+      (bathrooms > 0 ? 1 : 0) +
+      (priceRange[0] > 0 || priceRange[1] < 1000 ? 1 : 0)
+    );
   };
 
   const clearAllFilters = () => {
@@ -74,7 +102,27 @@ const Search = () => {
       amenities: [],
     };
     setFilters(clearedFilters);
-    updateFilters(clearedFilters);
+
+    // Also clear in the properties hook
+    updateFilters({
+      propertyType: [],
+      roomType: [],
+      minPrice: 0,
+      maxPrice: 1000,
+      bedrooms: 0,
+      bathrooms: 0,
+      amenities: [],
+    });
+  };
+
+  // Safe accessors for rendering active filters
+  const safeFilters = {
+    propertyType: filters?.propertyType || [],
+    roomType: filters?.roomType || [],
+    amenities: filters?.amenities || [],
+    priceRange: filters?.priceRange || [0, 1000],
+    bedrooms: filters?.bedrooms || 0,
+    bathrooms: filters?.bathrooms || 0,
   };
 
   return (
@@ -94,7 +142,7 @@ const Search = () => {
             <div className="flex items-center space-x-4">
               {/* Results count */}
               <span className="text-sm text-gray-600">
-                {pagination.totalCount} properties found
+                {pagination?.totalCount || 0} properties found
               </span>
 
               {/* Mobile Filter Button */}
@@ -147,43 +195,46 @@ const Search = () => {
             <div className="flex items-center space-x-2 mt-4 flex-wrap">
               <span className="text-sm text-gray-600">Active filters:</span>
 
-              {filters.propertyType.map((type) => (
+              {safeFilters.propertyType.map((type) => (
                 <Badge key={type} variant="secondary" className="capitalize">
                   {type.replace("_", " ")}
                 </Badge>
               ))}
 
-              {filters.roomType.map((type) => (
+              {safeFilters.roomType.map((type) => (
                 <Badge key={type} variant="secondary" className="capitalize">
                   {type.replace("_", " ")}
                 </Badge>
               ))}
 
-              {(filters.priceRange[0] > 0 || filters.priceRange[1] < 1000) && (
+              {(safeFilters.priceRange[0] > 0 ||
+                safeFilters.priceRange[1] < 1000) && (
                 <Badge variant="secondary">
-                  ${filters.priceRange[0]} - ${filters.priceRange[1]}+
+                  ${safeFilters.priceRange[0]} - ${safeFilters.priceRange[1]}+
                 </Badge>
               )}
 
-              {filters.bedrooms > 0 && (
-                <Badge variant="secondary">{filters.bedrooms}+ bedrooms</Badge>
-              )}
-
-              {filters.bathrooms > 0 && (
+              {safeFilters.bedrooms > 0 && (
                 <Badge variant="secondary">
-                  {filters.bathrooms}+ bathrooms
+                  {safeFilters.bedrooms}+ bedrooms
                 </Badge>
               )}
 
-              {filters.amenities.slice(0, 2).map((amenity) => (
+              {safeFilters.bathrooms > 0 && (
+                <Badge variant="secondary">
+                  {safeFilters.bathrooms}+ bathrooms
+                </Badge>
+              )}
+
+              {safeFilters.amenities.slice(0, 2).map((amenity) => (
                 <Badge key={amenity} variant="secondary" className="capitalize">
                   {amenity.replace("_", " ")}
                 </Badge>
               ))}
 
-              {filters.amenities.length > 2 && (
+              {safeFilters.amenities.length > 2 && (
                 <Badge variant="secondary">
-                  +{filters.amenities.length - 2} more amenities
+                  +{safeFilters.amenities.length - 2} more amenities
                 </Badge>
               )}
 
@@ -216,12 +267,12 @@ const Search = () => {
           {/* Properties Grid */}
           <div className="flex-1">
             <PropertyGrid
-              properties={properties}
+              properties={properties || []}
               loading={loading}
-              hasMore={pagination.hasNext}
+              hasMore={pagination?.hasNext || false}
               onLoadMore={loadMore}
               onWishlistToggle={toggleWishlist}
-              wishlist={wishlistIds}
+              wishlist={wishlistIds || new Set()}
             />
           </div>
         </div>

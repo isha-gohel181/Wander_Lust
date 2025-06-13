@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
 import Bookings from "./pages/Bookings";
 import NotFound from "./pages/NotFound";
+import Wishlist from "@/pages/Wishlist";
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
 
         {/* 404 route */}
         <Route path="*" element={<NotFound />} />
+        <Route path="/wishlist" element={<Wishlist />} />
       </Routes>
     </Layout>
   );

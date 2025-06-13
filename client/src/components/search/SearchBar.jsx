@@ -69,7 +69,7 @@ const SearchBar = ({ onClose }) => {
     <div className="w-full max-w-4xl mx-auto">
       <div className="flex flex-col lg:flex-row bg-white border border-gray-300 rounded-full lg:rounded-full shadow-lg overflow-hidden">
         {/* Destination */}
-        <div className="flex-1 p-4 lg:p-3">
+        <div className="flex-3 p-4 h-8 lg:p-3">
           <div className="flex items-center space-x-3">
             <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
             <div className="flex-1">

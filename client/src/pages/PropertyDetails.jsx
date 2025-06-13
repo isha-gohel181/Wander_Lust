@@ -29,10 +29,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BookingForm from "@/components/booking/BookingForm";
 import ReviewSection from "@/components/reviews/ReviewSection";
+import ReviewForm from "@/components/reviews/ReviewForm";
+import StarRating from "@/components/reviews/StarRating";
+import LeafletMap from "@/components/map/LeafletMap";
+import MapError from "@/components/map/MapError";
+import { reviewService } from "@/services/reviews";
 import { useProperty } from "@/hooks/useProperty";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice, getAmenityIcon } from "@/utils/helpers";
+import PropertyImageGallery from "@/components/property/PropertyImageGallery";
 import toast from "react-hot-toast";
 
 const PropertyDetails = () => {
@@ -43,7 +49,19 @@ const PropertyDetails = () => {
   const { user } = useAuth();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
+  const [mapError, setMapError] = React.useState(null);
+  const [isMapLoading, setIsMapLoading] = React.useState(false);
+
+  const userIsHost = user && property && user._id === property.host._id;
+  const hasStayedAtProperty =
+    user &&
+    user.bookings?.some(
+      (b) => b.propertyId === property._id && b.status === "completed"
+    );
+    
   const amenityIcons = {
     wifi: <Wifi className="h-4 w-4" />,
     free_parking: <Car className="h-4 w-4" />,
@@ -202,7 +220,7 @@ const PropertyDetails = () => {
                   src={primaryImage.url}
                   alt={property.title}
                   className="w-full h-full object-cover cursor-pointer hover:brightness-90 transition-all"
-                  onClick={() => setShowAllPhotos(true)}
+                  onClick={() => setShowGallery(true)}
                 />
               )}
             </div>
@@ -215,12 +233,12 @@ const PropertyDetails = () => {
                     src={image.url}
                     alt={`${property.title} ${index + 2}`}
                     className="w-full h-full object-cover cursor-pointer hover:brightness-90 transition-all"
-                    onClick={() => setShowAllPhotos(true)}
+                    onClick={() => setShowGallery(true)}
                   />
                   {index === 3 && otherImages.length > 4 && (
                     <div
                       className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer text-white font-semibold"
-                      onClick={() => setShowAllPhotos(true)}
+                      onClick={() => setShowGallery(true)}
                     >
                       +{otherImages.length - 3} more
                     </div>
@@ -234,10 +252,18 @@ const PropertyDetails = () => {
             <Button
               variant="outline"
               className="mt-4"
-              onClick={() => setShowAllPhotos(true)}
+              onClick={() => setShowGallery(true)}
             >
               Show all {property.images.length} photos
             </Button>
+          )}
+
+          {/* Image Gallery Modal */}
+          {showGallery && (
+            <PropertyImageGallery
+              images={property.images}
+              onClose={() => setShowGallery(false)}
+            />
           )}
         </div>
 
@@ -329,19 +355,177 @@ const PropertyDetails = () => {
                   {property.location.address}, {property.location.city},{" "}
                   {property.location.state} {property.location.zipCode}
                 </p>
-                {/* Here you could add a map component */}
-                <div className="h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-500">Map would go here</span>
+                <div className="h-[400px] rounded-lg overflow-hidden relative">
+                  {property.location?.coordinates ? (
+                    <LeafletMap
+                      center={{
+                        lat: property.location.coordinates.lat,
+                        lng: property.location.coordinates.lng,
+                      }}
+                      markerPosition={{
+                        lat: property.location.coordinates.lat,
+                        lng: property.location.coordinates.lng,
+                      }}
+                      zoom={15}
+                      draggable={false}
+                    />
+                  ) : (
+                    <MapError message="Property location not available" />
+                  )}
+                  {isMapLoading && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <div className="text-gray-600">Loading map...</div>
+                    </div>
+                  )}
                 </div>
+
+                {mapError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{mapError}</AlertDescription>
+                  </Alert>
+                )}
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-8" />
 
-            {/* Reviews */}
-            <ReviewSection propertyId={property._id} />
+            <div className="space-y-6">
+              {/* Review Header with Summary */}
+              <div className="flex flex-col space-y-2 md:space-y-0 md:flex-row md:justify-between md:items-center">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Guest Reviews
+                </h2>
+
+                <div className="flex items-center">
+                  <StarRating
+                    rating={property.ratings?.overall || 0}
+                    showValue={true}
+                    size="lg"
+                  />
+                  {property.reviewCount > 0 && (
+                    <span className="ml-2 text-gray-600">
+                      ({property.reviewCount}{" "}
+                      {property.reviewCount === 1 ? "review" : "reviews"})
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Rating Categories Breakdown */}
+              {property.ratings && property.reviewCount > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  {Object.entries(property.ratings)
+                    .filter(([key]) => key !== "overall")
+                    .map(([category, rating]) => (
+                      <div
+                        key={category}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="text-sm text-gray-600 capitalize">
+                          {category.replace(/_/g, " ")}
+                        </span>
+                        <div className="flex items-center">
+                          <StarRating rating={rating} size="sm" />
+                          <span className="ml-2 text-sm font-medium">
+                            {rating.toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {/* Review CTA for eligible users */}
+              {user && !userIsHost && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                  <h4 className="font-medium text-blue-800 mb-2">
+                    Share your experience
+                  </h4>
+                  <p className="text-sm text-blue-600 mb-3">
+                    {hasStayedAtProperty
+                      ? "Thank you for staying with us! Your review helps future guests make informed decisions."
+                      : "You can write a review after completing your stay at this property."}
+                  </p>
+                  <Button
+                    variant={hasStayedAtProperty ? "default" : "outline"}
+                    onClick={() => {
+                      if (hasStayedAtProperty) {
+                        setShowReviewForm(true);
+                      } else {
+                        toast.error(
+                          "You can only review properties where you've completed a stay"
+                        );
+                      }
+                    }}
+                    disabled={!hasStayedAtProperty}
+                  >
+                    Write a review
+                  </Button>
+                </div>
+              )}
+
+              {/* Review Form Modal/Section (conditionally rendered) */}
+              {showReviewForm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                  <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Write a Review</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowReviewForm(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <ReviewForm
+                      propertyId={property._id}
+                      onSubmit={async (reviewData) => {
+                        try {
+                          await reviewService.createReview({
+                            propertyId: property._id,
+                            ...reviewData,
+                          });
+                          setShowReviewForm(false);
+                          toast.success("Your review has been submitted!");
+                          // Refresh the page to show the new review
+                          window.location.reload();
+                        } catch (error) {
+                          console.error("Failed to submit review:", error);
+                          toast.error(
+                            "Failed to submit your review. Please try again."
+                          );
+                        }
+                      }}
+                      onCancel={() => setShowReviewForm(false)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Review Filters */}
+              {property.reviewCount > 5 && (
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" className="text-sm">
+                    All Reviews
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-sm">
+                    Recent First
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-sm">
+                    Highest Rated
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-sm">
+                    With Photos
+                  </Button>
+                </div>
+              )}
+
+              {/* Main Review Section */}
+              <ReviewSection propertyId={property._id} />
+            </div>
           </div>
-
+          
           {/* Right Column - Booking Card */}
           <div className="lg:col-span-1">
             <div className="sticky top-32">

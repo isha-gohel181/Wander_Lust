@@ -7,7 +7,22 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
-const FilterSidebar = ({ filters, updateFilters, onClose, className = "" }) => {
+const FilterSidebar = ({
+  filters = {},
+  updateFilters,
+  onClose,
+  className = "",
+}) => {
+  // Provide default values for all filter properties
+  const {
+    propertyType = [],
+    roomType = [],
+    priceRange = [0, 1000],
+    bedrooms = 0,
+    bathrooms = 0,
+    amenities = [],
+  } = filters;
+
   const propertyTypes = [
     { value: "apartment", label: "Apartment" },
     { value: "house", label: "House" },
@@ -26,7 +41,7 @@ const FilterSidebar = ({ filters, updateFilters, onClose, className = "" }) => {
     { value: "shared_room", label: "Shared room" },
   ];
 
-  const amenities = [
+  const amenitiesList = [
     { value: "wifi", label: "WiFi" },
     { value: "kitchen", label: "Kitchen" },
     { value: "washer", label: "Washer" },
@@ -71,7 +86,7 @@ const FilterSidebar = ({ filters, updateFilters, onClose, className = "" }) => {
           <h3 className="text-base font-semibold mb-4">Price Range</h3>
           <div className="space-y-4">
             <Slider
-              value={filters.priceRange}
+              value={priceRange}
               onValueChange={(value) => updateFilters({ priceRange: value })}
               max={1000}
               min={0}
@@ -79,8 +94,8 @@ const FilterSidebar = ({ filters, updateFilters, onClose, className = "" }) => {
               className="w-full"
             />
             <div className="flex justify-between text-sm text-gray-600">
-              <span>${filters.priceRange[0]}</span>
-              <span>${filters.priceRange[1]}+</span>
+              <span>${priceRange[0]}</span>
+              <span>${priceRange[1]}+</span>
             </div>
           </div>
         </div>
@@ -93,15 +108,15 @@ const FilterSidebar = ({ filters, updateFilters, onClose, className = "" }) => {
               <div key={type.value} className="flex items-center space-x-2">
                 <Checkbox
                   id={type.value}
-                  checked={filters.propertyType.includes(type.value)}
+                  checked={propertyType.includes(type.value)}
                   onCheckedChange={(checked) => {
                     if (checked) {
                       updateFilters({
-                        propertyType: [...filters.propertyType, type.value],
+                        propertyType: [...propertyType, type.value],
                       });
                     } else {
                       updateFilters({
-                        propertyType: filters.propertyType.filter(
+                        propertyType: propertyType.filter(
                           (t) => t !== type.value
                         ),
                       });
@@ -124,17 +139,15 @@ const FilterSidebar = ({ filters, updateFilters, onClose, className = "" }) => {
               <div key={type.value} className="flex items-center space-x-2">
                 <Checkbox
                   id={`room-${type.value}`}
-                  checked={filters.roomType.includes(type.value)}
+                  checked={roomType.includes(type.value)}
                   onCheckedChange={(checked) => {
                     if (checked) {
                       updateFilters({
-                        roomType: [...filters.roomType, type.value],
+                        roomType: [...roomType, type.value],
                       });
                     } else {
                       updateFilters({
-                        roomType: filters.roomType.filter(
-                          (t) => t !== type.value
-                        ),
+                        roomType: roomType.filter((t) => t !== type.value),
                       });
                     }
                   }}
@@ -160,7 +173,7 @@ const FilterSidebar = ({ filters, updateFilters, onClose, className = "" }) => {
                 {[0, 1, 2, 3, 4, 5].map((num) => (
                   <Button
                     key={num}
-                    variant={filters.bedrooms === num ? "default" : "outline"}
+                    variant={bedrooms === num ? "default" : "outline"}
                     size="sm"
                     onClick={() => updateFilters({ bedrooms: num })}
                     className="h-8 w-8 p-0"
@@ -177,7 +190,7 @@ const FilterSidebar = ({ filters, updateFilters, onClose, className = "" }) => {
                 {[0, 1, 2, 3, 4].map((num) => (
                   <Button
                     key={num}
-                    variant={filters.bathrooms === num ? "default" : "outline"}
+                    variant={bathrooms === num ? "default" : "outline"}
                     size="sm"
                     onClick={() => updateFilters({ bathrooms: num })}
                     className="h-8 w-8 p-0"
@@ -194,21 +207,19 @@ const FilterSidebar = ({ filters, updateFilters, onClose, className = "" }) => {
         <div>
           <h3 className="text-base font-semibold mb-4">Amenities</h3>
           <div className="grid grid-cols-1 gap-3">
-            {amenities.map((amenity) => (
+            {amenitiesList.map((amenity) => (
               <div key={amenity.value} className="flex items-center space-x-2">
                 <Checkbox
                   id={`amenity-${amenity.value}`}
-                  checked={filters.amenities.includes(amenity.value)}
+                  checked={amenities.includes(amenity.value)}
                   onCheckedChange={(checked) => {
                     if (checked) {
                       updateFilters({
-                        amenities: [...filters.amenities, amenity.value],
+                        amenities: [...amenities, amenity.value],
                       });
                     } else {
                       updateFilters({
-                        amenities: filters.amenities.filter(
-                          (a) => a !== amenity.value
-                        ),
+                        amenities: amenities.filter((a) => a !== amenity.value),
                       });
                     }
                   }}
