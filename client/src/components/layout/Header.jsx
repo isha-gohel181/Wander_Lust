@@ -1,4 +1,4 @@
-// client/src/components/layout/Header.jsx
+//client/src/components/layout/Header.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -16,6 +16,7 @@ import {
   User,
   Settings,
   Home as HomeIcon,
+  MessageSquare, // Add MessageSquare icon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,12 +28,14 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import SearchBar from "../search/SearchBar";
+import { useMessages } from "@/hooks/useMessages"; // Import useMessages hook
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { user } = useUser();
   const navigate = useNavigate();
+  const { unreadCount } = useMessages(); // Get unread message count
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
@@ -90,12 +93,26 @@ const Header = () => {
                       alt="Profile"
                       className="w-6 h-6 rounded-full"
                     />
+                    {unreadCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-wanderlust-500 text-white">
+                        {unreadCount}
+                      </Badge>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/messages")}>
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    <span>Messages</span>
+                    {unreadCount > 0 && (
+                      <Badge className="ml-auto bg-wanderlust-500 text-white">
+                        {unreadCount}
+                      </Badge>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/bookings")}>
                     <HomeIcon className="mr-2 h-4 w-4" />
@@ -141,12 +158,19 @@ const Header = () => {
               variant="ghost"
               size="sm"
               onClick={toggleMenu}
-              className="p-2"
+              className="p-2 relative"
             >
               {isMenuOpen ? (
                 <X className="h-5 w-5" />
               ) : (
-                <Menu className="h-5 w-5" />
+                <>
+                  <Menu className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-wanderlust-500 text-white">
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </>
               )}
             </Button>
           </div>
@@ -188,6 +212,21 @@ const Header = () => {
                   >
                     <User className="mr-2 h-4 w-4" />
                     Profile
+                  </Button>
+                </Link>
+                <Link to="/messages" onClick={toggleMenu}>
+                  <Button
+                    variant="ghost"
+                    className="justify-start w-full"
+                    size="sm"
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Messages
+                    {unreadCount > 0 && (
+                      <Badge className="ml-auto bg-wanderlust-500 text-white">
+                        {unreadCount}
+                      </Badge>
+                    )}
                   </Button>
                 </Link>
                 <Link to="/bookings" onClick={toggleMenu}>

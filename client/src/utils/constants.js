@@ -60,4 +60,4 @@ export const BOOKING_STATUS = {
 };
 
 export const CURRENCY_SYMBOL = "$";
-export const DEFAULT_CURRENCY = "USD";
+export const DEFAULT_CURRENCY = "INR";

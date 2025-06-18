@@ -1,3 +1,4 @@
+//server/src/routes/properties.js
 const express = require("express");
 const {
   getProperties,

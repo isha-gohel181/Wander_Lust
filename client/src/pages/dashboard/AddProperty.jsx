@@ -5,7 +5,7 @@ import {
   ArrowLeft,
   Upload,
   MapPin,
-  DollarSign,
+  IndianRupee,
   Home,
   Users,
   Camera,
@@ -65,9 +65,10 @@ const AddProperty = () => {
       coordinates: DEFAULT_LOCATION,
     },
     pricing: {
-      basePrice: 50,
+      basePrice: 3500,
       cleaningFee: 0,
-      currency: "USD",
+      serviceFee: 0, // Add service fee
+      currency: "INR",
     },
     amenities: [],
     images: [],
@@ -251,7 +252,7 @@ const AddProperty = () => {
 
       case 5:
         if (propertyData.pricing.basePrice < 1) {
-          toast.error("Base price must be at least $1");
+          toast.error("Base price must be at least ₹3500");
           return false;
         }
         break;
@@ -322,6 +323,7 @@ const AddProperty = () => {
           ...propertyData.pricing,
           basePrice: Number(propertyData.pricing.basePrice),
           cleaningFee: Number(propertyData.pricing.cleaningFee || 0),
+          serviceFee: Number(propertyData.pricing.serviceFee || 0),
         },
         images: imageUrls.map((url, index) => ({
           url,
@@ -347,7 +349,7 @@ const AddProperty = () => {
     { number: 2, title: "Location", icon: MapPin },
     { number: 3, title: "Details", icon: Users },
     { number: 4, title: "Photos", icon: Camera },
-    { number: 5, title: "Pricing", icon: DollarSign },
+    { number: 5, title: "Pricing", icon: IndianRupee },
   ];
 
   const renderStep = () => {
@@ -633,7 +635,7 @@ const AddProperty = () => {
               <div>
                 <Label htmlFor="basePrice">Base Price (per night)</Label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="basePrice"
                     type="number"
@@ -647,18 +649,19 @@ const AddProperty = () => {
                       );
                     }}
                     className="pl-10"
-                    placeholder="50"
+                    placeholder="3500"
                     required
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Minimum $1 per night
+                  Minimum ₹3500 per night
                 </p>
               </div>
+
               <div>
                 <Label htmlFor="cleaningFee">Cleaning Fee (optional)</Label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="cleaningFee"
                     type="number"
@@ -677,6 +680,67 @@ const AddProperty = () => {
                 </div>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="serviceFee">Service Fee (optional)</Label>
+                <div className="relative">
+                  <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="serviceFee"
+                    type="number"
+                    min="0"
+                    value={propertyData.pricing.serviceFee}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      handleInputChange(
+                        "pricing.serviceFee",
+                        Math.max(0, value)
+                      );
+                    }}
+                    className="pl-10"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Summary card showing total price */}
+            <Card className="mt-4 bg-gray-50">
+              <CardContent className="pt-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Base Price:</span>
+                    <span className="font-medium">
+                      ₹{propertyData.pricing.basePrice}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Cleaning Fee:</span>
+                    <span className="font-medium">
+                      ₹{propertyData.pricing.cleaningFee}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Service Fee:</span>
+                    <span className="font-medium">
+                      ₹{propertyData.pricing.serviceFee}
+                    </span>
+                  </div>
+                  <div className="border-t pt-2 mt-2 flex justify-between">
+                    <span className="font-semibold">
+                      Total Price per Night:
+                    </span>
+                    <span className="font-semibold">
+                      ₹
+                      {propertyData.pricing.basePrice +
+                        propertyData.pricing.cleaningFee +
+                        propertyData.pricing.serviceFee}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="p-4 bg-gray-50 rounded-lg">
               <h3 className="font-semibold text-gray-900 mb-2">House Rules</h3>

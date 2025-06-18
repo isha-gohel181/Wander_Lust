@@ -1,3 +1,4 @@
+//server/src/routes/bookings.js
 const express = require("express");
 const {
   createBooking,

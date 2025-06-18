@@ -143,7 +143,7 @@ const PropertyCard = ({ property, onWishlistToggle, isInWishlist = false }) => {
           <div className="flex items-baseline justify-between">
             <div>
               <span className="text-lg font-bold text-gray-900">
-                ${property.pricing?.basePrice}
+                ₹{property.pricing?.basePrice}
               </span>
               <span className="text-sm text-gray-600 ml-1">per night</span>
             </div>

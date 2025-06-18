@@ -141,7 +141,7 @@ const Profile = () => {
               <TabsTrigger value="wishlist">
                 Wishlist ({wishlist.length})
               </TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+              {/* <TabsTrigger value="settings">Settings</TabsTrigger> */}
             </TabsList>
 
             {/* Profile Tab */}
@@ -264,90 +264,80 @@ const Profile = () => {
               </Card>
             </TabsContent>
 
-            {/* Settings Tab */}
-            <TabsContent value="settings">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Email Settings */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Email Preferences
-                    </h3>
-                    <div className="space-y-3">
-                      <label className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="rounded"
-                        />
-                        <span>Booking confirmations and updates</span>
-                      </label>
-                      <label className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="rounded"
-                        />
-                        <span>Special offers and promotions</span>
-                      </label>
-                      <label className="flex items-center space-x-3">
-                        <input type="checkbox" className="rounded" />
-                        <span>Marketing emails</span>
-                      </label>
-                    </div>
-                  </div>
+        {/* 
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Settings</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Email Preferences
+                </h3>
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3">
+                    <input type="checkbox" defaultChecked className="rounded" />
+                    <span>Booking confirmations and updates</span>
+                  </label>
+                  <label className="flex items-center space-x-3">
+                    <input type="checkbox" defaultChecked className="rounded" />
+                    <span>Special offers and promotions</span>
+                  </label>
+                  <label className="flex items-center space-x-3">
+                    <input type="checkbox" className="rounded" />
+                    <span>Marketing emails</span>
+                  </label>
+                </div>
+              </div>
 
-                  <Separator />
+              <Separator />
 
-                  {/* Privacy Settings */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Privacy
-                    </h3>
-                    <div className="space-y-3">
-                      <label className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="rounded"
-                        />
-                        <span>Show profile to other users</span>
-                      </label>
-                      <label className="flex items-center space-x-3">
-                        <input type="checkbox" className="rounded" />
-                        <span>Allow search engines to index my profile</span>
-                      </label>
-                    </div>
-                  </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Privacy
+                </h3>
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3">
+                    <input type="checkbox" defaultChecked className="rounded" />
+                    <span>Show profile to other users</span>
+                  </label>
+                  <label className="flex items-center space-x-3">
+                    <input type="checkbox" className="rounded" />
+                    <span>Allow search engines to index my profile</span>
+                  </label>
+                </div>
+              </div>
 
-                  <Separator />
+              <Separator />
 
-                  {/* Danger Zone */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-red-600 mb-4">
-                      Danger Zone
-                    </h3>
-                    <div className="space-y-3">
-                      <Button
-                        variant="outline"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        Deactivate Account
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                      >
-                        Delete Account
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-red-600 mb-4">
+                  Danger Zone
+                </h3>
+                <div className="space-y-3">
+                  <Button
+                    variant="outline"
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                  >
+                    Deactivate Account
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                  >
+                    Delete Account
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        */}
+
           </Tabs>
         </div>
       </div>

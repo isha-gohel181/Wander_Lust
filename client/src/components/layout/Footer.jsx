@@ -1,12 +1,21 @@
 // client/src/components/layout/Footer.jsx
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 
 const Footer = () => {
+  const location = useLocation();
+
+  // Check if we're on a dashboard page (has sidebar)
+  const isDashboardPage = location.pathname.startsWith("/dashboard");
+
   return (
     <footer className="bg-gray-100 border-t border-gray-200">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div
+        className={`container mx-auto px-4 sm:px-6 lg:px-8 py-12 ${
+          isDashboardPage ? "lg:pl-64" : ""
+        }`}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
@@ -173,8 +182,8 @@ const Footer = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">🌍 English (US)</span>
-            <span className="text-sm text-gray-600">$ USD</span>
+            <span className="text-sm text-gray-600">🌍 English (IN)</span>
+            <span className="text-sm text-gray-600">₹ INR</span>
           </div>
         </div>
       </div>

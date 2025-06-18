@@ -30,7 +30,7 @@ export const propertyService = {
     return response.data;
   },
 
-  // Delete property (host only)
+  // Delete property (hos-t only)
   deleteProperty: async (id) => {
     console.log("🔧 propertyService.deleteProperty called for ID:", id);
     const response = await api.delete(`/properties/${id}`);

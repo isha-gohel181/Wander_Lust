@@ -1,7 +1,7 @@
 // client/src/utils/helpers.js
 import { format, formatDistanceToNow } from "date-fns";
 
-export const formatPrice = (price, currency = "USD") => {
+export const formatPrice = (price, currency = "INR") => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currency,
@@ -48,11 +48,11 @@ export const calculateTotalPrice = (
   basePrice,
   nights,
   cleaningFee = 0,
-  serviceFeePercent = 14,
+  serviceFee = 0,
   taxPercent = 8
 ) => {
   const subtotal = basePrice * nights;
-  const serviceFee = Math.round(subtotal * (serviceFeePercent / 100));
+  // const serviceFee = Math.round(subtotal * (serviceFeePercent / 100));
   const taxes = Math.round(
     (subtotal + cleaningFee + serviceFee) * (taxPercent / 100)
   );
@@ -139,4 +139,11 @@ export const extractPublicId = (imageUrl) => {
     console.error("Error extracting public ID:", err);
     return null;
   }
+};
+
+export const formatTime = (dateString) => {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };

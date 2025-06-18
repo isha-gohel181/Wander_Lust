@@ -1,6 +1,5 @@
-// client/src/App.jsx
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { SignedIn, SignedOut, RedirectToSignIn } from "@clerk/clerk-react";
 import Layout from "./components/layout/Layout";
 import Home from "./pages/Home";
@@ -11,17 +10,18 @@ import Dashboard from "./pages/Dashboard";
 import Bookings from "./pages/Bookings";
 import NotFound from "./pages/NotFound";
 import Wishlist from "@/pages/Wishlist";
+import EditProperty from "./pages/dashboard/EditProperty";
+import Messages from "./pages/Messages";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentError from "./pages/PaymentError";
 
 function App() {
   return (
     <Layout>
       <Routes>
-        {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/search" element={<Search />} />
         <Route path="/property/:id" element={<PropertyDetails />} />
-
-        {/* Protected routes */}
         <Route
           path="/profile"
           element={
@@ -61,10 +61,27 @@ function App() {
             </>
           }
         />
-
-        {/* 404 route */}
-        <Route path="*" element={<NotFound />} />
+        <Route
+          path="/messages"
+          element={
+            <>
+              <SignedIn>
+                <Messages />
+              </SignedIn>
+              <SignedOut>
+                <RedirectToSignIn />
+              </SignedOut>
+            </>
+          }
+        />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route
+          path="/dashboard/properties/:id/edit"
+          element={<EditProperty />}
+        />
+        <Route path="/payment/success" element={<PaymentSuccess />} />
+        <Route path="/payment/error" element={<PaymentError />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
   );

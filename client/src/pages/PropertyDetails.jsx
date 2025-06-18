@@ -39,6 +39,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice, getAmenityIcon } from "@/utils/helpers";
 import PropertyImageGallery from "@/components/property/PropertyImageGallery";
+import ContactHostModal from "@/components/messages/ContactHostModal";
 import toast from "react-hot-toast";
 
 const PropertyDetails = () => {
@@ -51,7 +52,7 @@ const PropertyDetails = () => {
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
-
+  const [showContactModal, setShowContactModal] = useState(false);
   const [mapError, setMapError] = React.useState(null);
   const [isMapLoading, setIsMapLoading] = React.useState(false);
 
@@ -525,7 +526,7 @@ const PropertyDetails = () => {
               <ReviewSection propertyId={property._id} />
             </div>
           </div>
-          
+
           {/* Right Column - Booking Card */}
           <div className="lg:col-span-1">
             <div className="sticky top-32">
@@ -573,7 +574,17 @@ const PropertyDetails = () => {
                     </p>
                   )}
 
-                  <Button variant="outline" className="w-full">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      if (!user) {
+                        toast.error("Please sign in to contact the host");
+                        return;
+                      }
+                      setShowContactModal(true);
+                    }}
+                  >
                     Contact Host
                   </Button>
                 </CardContent>
@@ -590,8 +601,16 @@ const PropertyDetails = () => {
           </div>
         </div>
       </div>
+      {showContactModal && (
+        <ContactHostModal
+          host={property.host}
+          property={property}
+          onClose={() => setShowContactModal(false)}
+        />
+      )}
     </div>
   );
+
 };
 
 export default PropertyDetails;

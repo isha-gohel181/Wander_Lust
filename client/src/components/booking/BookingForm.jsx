@@ -1,6 +1,14 @@
-// client/src/components/booking/BookingForm.jsx
+//client/src/components/booking/BookigForm.jsx
 import React, { useState } from "react";
-import { Calendar, Users, CreditCard } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  Users,
+  CreditCard,
+  Info,
+  Shield,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,11 +30,15 @@ import {
 } from "@/utils/helpers";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import CashfreePayment from "@/components/payment/CashfreePayment";
 
 const BookingForm = ({ property, onBookingSuccess }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { createBooking } = useBookings();
   const [loading, setLoading] = useState(false);
+  const [createdBooking, setCreatedBooking] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
   const [bookingData, setBookingData] = useState({
     checkIn: null,
     checkOut: null,
@@ -88,14 +100,31 @@ const BookingForm = ({ property, onBookingSuccess }) => {
         checkOut: bookingData.checkOut,
         guests: bookingData.guests,
         specialRequests: bookingData.specialRequests,
+        totalAmount: pricing.total,
       });
 
-      toast.success("Booking request submitted successfully!");
-      onBookingSuccess?.(booking);
+      setCreatedBooking(booking);
+      setShowPayment(true);
+      toast.success("Booking created! Proceed with payment.");
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || "Failed to create booking");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fixed: Navigate to bookings page after successful payment
+  const handlePaymentSuccess = (updatedBooking) => {
+    toast.success("Payment successful!");
+
+    // Navigate to bookings page after successful payment
+    setTimeout(() => {
+      navigate("/bookings");
+    }, 2000); // Give user time to see the success message
+
+    // Also call the onBookingSuccess callback if provided
+    if (onBookingSuccess) {
+      onBookingSuccess(updatedBooking);
     }
   };
 
@@ -108,6 +137,74 @@ const BookingForm = ({ property, onBookingSuccess }) => {
         <Button className="w-full bg-wanderlust-500 hover:bg-wanderlust-600">
           Sign In to Book
         </Button>
+      </div>
+    );
+  }
+
+  if (showPayment && createdBooking) {
+    return (
+      <div className="space-y-6 relative">
+        {/* Booking Summary */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-semibold">Booking Summary</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs h-7 px-2"
+              onClick={() => setShowPayment(false)}
+            >
+              Edit Booking
+            </Button>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Check-in:</span>
+              <span>
+                {format(new Date(createdBooking.checkIn), "MMM dd, yyyy")}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Check-out:</span>
+              <span>
+                {format(new Date(createdBooking.checkOut), "MMM dd, yyyy")}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Guests:</span>
+              <span>
+                {totalGuests} {totalGuests === 1 ? "guest" : "guests"}
+              </span>
+            </div>
+            <Separator className="my-2" />
+            <div className="flex justify-between font-semibold">
+              <span>Total:</span>
+              <span>{formatPrice(pricing.total)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Secure Payment Badge */}
+        <div className="flex items-center justify-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+          <Shield className="h-4 w-4 text-blue-600 mr-2" />
+          <span className="text-sm text-blue-800">
+            Secure payment processing via Cashfree
+          </span>
+        </div>
+
+        {/* Success Message */}
+        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+          <p className="text-sm text-green-700">
+            After payment completion, you'll be redirected to your bookings page.
+          </p>
+        </div>
+
+        {/* Cashfree Payment Component */}
+        <CashfreePayment
+          booking={createdBooking}
+          onSuccess={handlePaymentSuccess}
+          onClose={() => setShowPayment(false)}
+        />
       </div>
     );
   }
@@ -185,7 +282,7 @@ const BookingForm = ({ property, onBookingSuccess }) => {
               className="w-full justify-start text-left font-normal"
             >
               <Users className="mr-2 h-4 w-4" />
-              {totalGuests === 1 ? "1 guest" : `${totalGuests} guests`}
+             {totalGuests === 1 ? "1 guest" : `${totalGuests} guests`}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80">
@@ -320,18 +417,75 @@ const BookingForm = ({ property, onBookingSuccess }) => {
 
             {pricing.cleaningFee > 0 && (
               <div className="flex justify-between">
-                <span>Cleaning fee</span>
+                <div className="flex items-center">
+                  <span>Cleaning fee</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 ml-1"
+                      >
+                        <Info className="h-3 w-3" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-60">
+                      <p className="text-xs text-gray-600">
+                        One-time fee charged by host to cover the cost of
+                        cleaning their space.
+                      </p>
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 <span>{formatPrice(pricing.cleaningFee)}</span>
               </div>
             )}
 
             <div className="flex justify-between">
-              <span>Service fee</span>
+              <div className="flex items-center">
+                <span>Service fee</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 ml-1"
+                    >
+                      <Info className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-60">
+                    <p className="text-xs text-gray-600">
+                      This helps us run our platform and offer services like
+                      24/7 support.
+                    </p>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <span>{formatPrice(pricing.serviceFee)}</span>
             </div>
 
             <div className="flex justify-between">
-              <span>Taxes</span>
+              <div className="flex items-center">
+                <span>Taxes</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 ml-1"
+                    >
+                      <Info className="h-3 w-3" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-60">
+                    <p className="text-xs text-gray-600">
+                      Local taxes required by law. May include VAT, GST, and
+                      other applicable taxes.
+                    </p>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <span>{formatPrice(pricing.taxes)}</span>
             </div>
           </div>
@@ -349,15 +503,54 @@ const BookingForm = ({ property, onBookingSuccess }) => {
       <Button
         onClick={handleBooking}
         disabled={!isFormValid() || loading}
-        className="w-full bg-wanderlust-500 hover:bg-wanderlust-600"
+        className="w-full bg-wanderlust-500 hover:bg-wanderlust-600 group"
         size="lg"
       >
-        {loading ? "Processing..." : "Request to Book"}
+        {loading ? (
+          "Processing..."
+        ) : (
+          <div className="flex items-center justify-center w-full">
+            <CreditCard className="mr-2 h-4 w-4" />
+            <span>Book Now</span>
+            <ArrowRight className="h-4 w-4 ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+          </div>
+        )}
       </Button>
 
-      <p className="text-xs text-gray-500 text-center">
-        You won't be charged yet. The host will review your request.
-      </p>
+      {/* Payment Trust Indicators */}
+      <div className="flex flex-col space-y-2">
+        <p className="text-xs text-gray-500 text-center">
+          You won't be charged until your booking is confirmed.
+        </p>
+
+        <div className="flex items-center justify-center space-x-4 mt-2">
+          <img
+            src="https://cdn.iconscout.com/icon/free/png-256/free-visa-3-226460.png"
+            alt="Visa"
+            className="h-5 opacity-70"
+          />
+          <img
+            src="https://cdn.iconscout.com/icon/free/png-256/free-mastercard-3-226450.png"
+            alt="Mastercard"
+            className="h-5 opacity-70"
+          />
+          <img
+            src="https://cdn.iconscout.com/icon/free/png-256/free-american-express-51-675738.png"
+            alt="Amex"
+            className="h-5 opacity-70"
+          />
+          <img
+            src="https://cdn.iconscout.com/icon/free/png-256/free-paypal-34-226455.png"
+            alt="PayPal"
+            className="h-5 opacity-70"
+          />
+        </div>
+
+        <div className="flex items-center justify-center text-xs text-gray-500 mt-1">
+          <Shield className="h-3 w-3 mr-1" />
+          <span>Secure payment processing</span>
+        </div>
+      </div>
     </div>
   );
 };

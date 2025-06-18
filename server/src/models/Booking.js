@@ -1,4 +1,3 @@
-// server/src/models/Booking.js
 const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema(
@@ -79,27 +78,43 @@ const bookingSchema = new mongoose.Schema(
       },
       currency: {
         type: String,
-        default: "USD",
+        default: "INR",
       },
     },
-    paymentDetails: {
-      paymentMethod: {
+
+    // Add a direct totalAmount field for easier access
+    totalAmount: {
+      type: Number,
+      // This will be automatically set from pricing.total
+    },
+
+    payment: {
+      orderId: String,
+      paymentId: String,
+      cfOrderId: String,
+      amount: Number,
+      currency: {
         type: String,
-        enum: ["credit_card", "debit_card", "paypal", "stripe"],
-        required: true,
+        default: "INR",
       },
-      paymentStatus: {
+      status: {
         type: String,
-        enum: ["pending", "paid", "failed", "refunded", "partially_refunded"],
+        enum: ["pending", "success", "failed","paid", "cancelled", "refunded"],
         default: "pending",
       },
-      transactionId: {
+      gateway: {
         type: String,
+        enum: ["cashfree", "other"],
+        default: "cashfree",
       },
-      paidAt: {
-        type: Date,
-      },
+      method: String,
+      createdAt: Date,
+      paidAt: Date,
+      refundId: String,
+      refundAmount: Number,
+      refundedAt: Date,
     },
+
     status: {
       type: String,
       enum: [
@@ -109,6 +124,7 @@ const bookingSchema = new mongoose.Schema(
         "cancelled_by_host",
         "completed",
         "no_show",
+        "payment_failed",
       ],
       default: "pending",
     },
@@ -140,6 +156,8 @@ const bookingSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
@@ -151,19 +169,44 @@ bookingSchema.index({ checkIn: 1, checkOut: 1 });
 bookingSchema.index({ status: 1 });
 bookingSchema.index({ createdAt: -1 });
 
-// Virtual for calculating number of nights
+// Virtual: Number of Nights
 bookingSchema.virtual("numberOfNights").get(function () {
-  const checkIn = new Date(this.checkIn);
-  const checkOut = new Date(this.checkOut);
-  const timeDiff = checkOut.getTime() - checkIn.getTime();
+  const timeDiff = new Date(this.checkOut) - new Date(this.checkIn);
   return Math.ceil(timeDiff / (1000 * 3600 * 24));
 });
 
-// Pre-save middleware to calculate total guests
+// Virtual: Total Guests
+bookingSchema.virtual("totalGuests").get(function () {
+  return this.guests.adults + this.guests.children + this.guests.infants;
+});
+
+// Pre-save middleware to ensure totalAmount is set
 bookingSchema.pre("save", function (next) {
-  this.totalGuests =
-    this.guests.adults + this.guests.children + this.guests.infants;
+  // Ensure totalAmount matches pricing.total
+  if (this.pricing && this.pricing.total) {
+    this.totalAmount = this.pricing.total;
+  }
+
+  // Calculate total guests for legacy compatibility
+  if (this.guests) {
+    this.totalGuests =
+      this.guests.adults + this.guests.children + this.guests.infants;
+  }
+
   next();
 });
+
+// Method to get the booking total amount
+bookingSchema.methods.getTotalAmount = function () {
+  return this.totalAmount || this.pricing?.total || 0;
+};
+
+// Static method to create a booking with proper total amount
+bookingSchema.statics.createBooking = function (bookingData) {
+  if (bookingData.pricing && bookingData.pricing.total) {
+    bookingData.totalAmount = bookingData.pricing.total;
+  }
+  return this.create(bookingData);
+};
 
 module.exports = mongoose.model("Booking", bookingSchema);

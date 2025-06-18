@@ -3,12 +3,21 @@ import { useState, useEffect, useCallback } from "react";
 import { bookingService } from "../services/bookings";
 import toast from "react-hot-toast";
 
-export const useBookings = (type = "guest") => {
+export const useBookings = (type = "guest", options = {}) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // 🔥 FIX: Add enabled option to conditionally fetch
+  const { enabled = true } = options;
 
   const fetchBookings = useCallback(async () => {
+    // Don't fetch if disabled
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
 
@@ -21,11 +30,14 @@ export const useBookings = (type = "guest") => {
       setBookings(data);
     } catch (err) {
       setError(err.message);
-      toast.error(err.message);
+      // Only show toast error if it's not a 403 (unauthorized) error
+      if (!err.message.includes('403') && !err.message.includes('Host access required')) {
+        toast.error(err.message);
+      }
     } finally {
       setLoading(false);
     }
-  }, [type]);
+  }, [type, enabled]);
 
   useEffect(() => {
     fetchBookings();

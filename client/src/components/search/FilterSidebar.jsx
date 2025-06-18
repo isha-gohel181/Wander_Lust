@@ -13,16 +13,16 @@ const FilterSidebar = ({
   onClose,
   className = "",
 }) => {
-  // Provide default values for all filter properties
+  // Provide default values for all filter properties (updated to rupee range)
   const {
     propertyType = [],
     roomType = [],
-    priceRange = [0, 1000],
+    priceRange = [0, 80000], // Updated from [0, 1000] to INR range
     bedrooms = 0,
     bathrooms = 0,
     amenities = [],
   } = filters;
-
+ 
   const propertyTypes = [
     { value: "apartment", label: "Apartment" },
     { value: "house", label: "House" },
@@ -58,15 +58,26 @@ const FilterSidebar = ({
     updateFilters({
       propertyType: [],
       roomType: [],
-      priceRange: [0, 1000],
+      priceRange: [0, 80000], // Updated to INR range
       bedrooms: 0,
       bathrooms: 0,
       amenities: [],
     });
   };
 
+  // Function to format rupee values
+  const formatRupees = (value) => {
+    if (value >= 100000) {
+      return `₹${(value / 100000).toFixed(1)}L`; // Lakh format
+    } else if (value >= 1000) {
+      return `₹${(value / 1000).toFixed(0)}K`; // Thousand format
+    } else {
+      return `₹${value}`;
+    }
+  };
+
   return (
-    <div className={`bg-white h-full flex flex-col ${className}`}>
+    <div className={`bg-white h-full flex-col ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b">
         <h2 className="text-lg font-semibold">Filters</h2>
@@ -88,14 +99,14 @@ const FilterSidebar = ({
             <Slider
               value={priceRange}
               onValueChange={(value) => updateFilters({ priceRange: value })}
-              max={1000}
+              max={80000} // Updated from 1000 to 80000 INR
               min={0}
-              step={10}
+              step={1000} // Updated from 10 to 1000 for better INR steps
               className="w-full"
             />
             <div className="flex justify-between text-sm text-gray-600">
-              <span>${priceRange[0]}</span>
-              <span>${priceRange[1]}+</span>
+              <span>{formatRupees(priceRange[0])}</span>
+              <span>{formatRupees(priceRange[1])}+</span>
             </div>
           </div>
         </div>

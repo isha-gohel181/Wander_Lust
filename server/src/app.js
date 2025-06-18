@@ -6,7 +6,7 @@ const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const bodyParser = require("body-parser");
 require("dotenv").config();
-
+//server/src/app.js
 const connectDB = require("./config/database");
 const errorHandler = require("./middleware/errorHandler");
 
@@ -21,12 +21,23 @@ const propertyRoutes = require("./routes/properties");
 const bookingRoutes = require("./routes/bookings");
 const reviewRoutes = require("./routes/reviews");
 const uploadRoutes = require('./routes/upload'); // Add upload routes
+const messageRoutes = require("./routes/messages");
+const paymentRoutes = require("./routes/payment");
 
 // Import Cloudinary config and test connection
 const { testConnection } = require('./config/cloudinary');
 testConnection();
 const app = express();
 connectDB();
+
+const http = require("http");
+const { initializeSocket } = require("./config/socket");
+
+// Create HTTP server
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+initializeSocket(server);
 
 // Security and utility middlewares
 app.use(
@@ -37,7 +48,7 @@ app.use(
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: [process.env.FRONTEND_URL],
     credentials: true,
     optionsSuccessStatus: 200,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
@@ -98,7 +109,9 @@ app.use("/api/properties", propertyRoutes);
 app.use("/api/users", requireAuth, getUserFromClerk, userRoutes);
 app.use("/api/bookings", requireAuth, getUserFromClerk, bookingRoutes);
 app.use("/api/reviews", requireAuth, getUserFromClerk, reviewRoutes);
-app.use('/api/upload', uploadLimiter, uploadRoutes); // Add upload routes with special rate limiting
+app.use('/api/upload', requireAuth, getUserFromClerk, uploadLimiter, uploadRoutes); // Add upload routes with special rate limiting
+app.use("/api/messages", messageRoutes);
+app.use("/api/payments", paymentRoutes);
 
 // 404 Fallback
 app.use((req, res) => {
@@ -121,6 +134,6 @@ process.on('SIGINT', () => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
+server.listen(PORT, () =>
   console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV}`)
 );
