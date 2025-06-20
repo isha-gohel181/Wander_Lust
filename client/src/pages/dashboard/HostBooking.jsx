@@ -161,7 +161,7 @@ const HostBookings = () => {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
           <TabsTrigger value="all">All ({allBookings.length})</TabsTrigger>
           <TabsTrigger value="pending">
             Pending ({pendingBookings.length})
@@ -169,9 +169,9 @@ const HostBookings = () => {
           <TabsTrigger value="confirmed">
             Confirmed ({confirmedBookings.length})
           </TabsTrigger>
-          <TabsTrigger value="completed">
+          {/* <TabsTrigger value="completed">
             Completed ({completedBookings.length})
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="all">
@@ -186,9 +186,9 @@ const HostBookings = () => {
           {getTabContent(confirmedBookings, "No confirmed reservations")}
         </TabsContent>
 
-        <TabsContent value="completed">
+        {/* <TabsContent value="completed">
           {getTabContent(completedBookings, "No completed reservations")}
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </div>
   );

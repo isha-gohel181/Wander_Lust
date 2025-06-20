@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { paymentService } from "@/services/payment";
 import { formatPrice, formatDate } from "@/utils/helpers";
+import api from "@/services/api";
 import toast from "react-hot-toast";
 
 const PaymentSuccess = () => {
@@ -357,7 +358,7 @@ const PaymentSuccess = () => {
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total {isSuccessful ? "Paid" : "Amount"}</span>
                   <span className="flex items-center">
-                    <IndianRupee className="h-5 w-5 mr-1" />
+                    {/* <IndianRupee className="h-5 w-5 mr-1" /> */}
                     {paymentData.amount
                       ? formatPrice(
                           paymentData.amount,

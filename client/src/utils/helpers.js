@@ -52,7 +52,6 @@ export const calculateTotalPrice = (
   taxPercent = 8
 ) => {
   const subtotal = basePrice * nights;
-  // const serviceFee = Math.round(subtotal * (serviceFeePercent / 100));
   const taxes = Math.round(
     (subtotal + cleaningFee + serviceFee) * (taxPercent / 100)
   );

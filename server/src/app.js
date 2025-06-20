@@ -1,4 +1,3 @@
-//server/src/app.js
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -6,57 +5,53 @@ const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const bodyParser = require("body-parser");
 require("dotenv").config();
-//server/src/app.js
+
 const connectDB = require("./config/database");
 const errorHandler = require("./middleware/errorHandler");
 
 const { handleClerkWebhook } = require("./controllers/authController");
-
-// Auth-protected middleware
 const { requireAuth, getUserFromClerk } = require("./middleware/auth");
 
-// Routes
 const userRoutes = require("./routes/users");
 const propertyRoutes = require("./routes/properties");
 const bookingRoutes = require("./routes/bookings");
 const reviewRoutes = require("./routes/reviews");
-const uploadRoutes = require('./routes/upload'); // Add upload routes
+const uploadRoutes = require("./routes/upload");
 const messageRoutes = require("./routes/messages");
 const paymentRoutes = require("./routes/payment");
 
-// Import Cloudinary config and test connection
-const { testConnection } = require('./config/cloudinary');
+const { testConnection } = require("./config/cloudinary");
 testConnection();
+
 const app = express();
 connectDB();
 
 const http = require("http");
 const { initializeSocket } = require("./config/socket");
-
-// Create HTTP server
 const server = http.createServer(app);
-
-// Initialize Socket.IO
 initializeSocket(server);
 
-// Security and utility middlewares
+// Security and utility middleware
 app.use(
   helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow Cloudinary images
+    crossOriginResourcePolicy: { policy: "cross-origin" },
   })
 );
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL],
+    origin: [
+      process.env.FRONTEND_URL,
+      "http://localhost:5173",
+      "http://localhost:3000",
+    ],
     credentials: true,
-    optionsSuccessStatus: 200,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-// Rate limiter
+// Rate limiters
 app.use(
   "/api/",
   rateLimit({
@@ -68,23 +63,22 @@ app.use(
   })
 );
 
-// Special rate limit for uploads (more restrictive)
 const uploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 upload requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 20,
   message: {
-    error: 'Too many upload requests, please try again later.'
-  }
+    error: "Too many upload requests, please try again later.",
+  },
 });
 
-// Webhook route (must use raw body before express.json)
+// Webhook handler (raw body)
 app.post(
   "/api/auth/webhook",
   bodyParser.raw({ type: "*/*" }),
   handleClerkWebhook
 );
 
-// JSON parsers (after raw)
+// JSON parsers
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -92,7 +86,7 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 
-// Health check
+// Health check route
 app.get("/health", (req, res) => {
   res.status(200).json({
     message: "Wanderlust API is running!",
@@ -101,39 +95,48 @@ app.get("/health", (req, res) => {
   });
 });
 
-// PUBLIC ROUTES (no authentication required)
-// Mount properties routes without auth middleware first for public endpoints
+// ROUTES
 app.use("/api/properties", propertyRoutes);
+app.use("/api/payment", paymentRoutes);
 
-// PROTECTED ROUTES (authentication required)
 app.use("/api/users", requireAuth, getUserFromClerk, userRoutes);
 app.use("/api/bookings", requireAuth, getUserFromClerk, bookingRoutes);
 app.use("/api/reviews", requireAuth, getUserFromClerk, reviewRoutes);
-app.use('/api/upload', requireAuth, getUserFromClerk, uploadLimiter, uploadRoutes); // Add upload routes with special rate limiting
+app.use(
+  "/api/upload",
+  requireAuth,
+  getUserFromClerk,
+  uploadLimiter,
+  uploadRoutes
+);
 app.use("/api/messages", messageRoutes);
-app.use("/api/payments", paymentRoutes);
 
-// 404 Fallback
+// 404 fallback
 app.use((req, res) => {
-  res.status(404).json({ success: false, message: "Route not found" });
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+    requestedUrl: req.url,
+    method: req.method,
+  });
 });
 
 // Global error handler
 app.use(errorHandler);
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received. Shutting down gracefully...");
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT received. Shutting down gracefully...');
+process.on("SIGINT", () => {
+  console.log("SIGINT received. Shutting down gracefully...");
   process.exit(0);
 });
 
 // Start server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () =>
-  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV}`)
-);
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV}`);
+});

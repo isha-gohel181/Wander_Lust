@@ -1,4 +1,3 @@
-//server/src/services/cashfreeService.js
 const crypto = require("crypto");
 const axios = require("axios");
 const { v4: uuidv4 } = require("uuid");
@@ -15,8 +14,13 @@ class CashfreeService {
   constructor() {
     this.appId = process.env.CASHFREE_APP_ID;
     this.secretKey = process.env.CASHFREE_SECRET_KEY;
-    this.returnUrl = process.env.CASHFREE_RETURN_URL;
-    this.notifyUrl = process.env.CASHFREE_NOTIFY_URL;
+    // Fix the webhook URL - use correct route path
+    this.returnUrl =
+      process.env.CASHFREE_RETURN_URL ||
+      "http://localhost:5000/api/payment/return";
+    this.notifyUrl =
+      process.env.CASHFREE_NOTIFY_URL ||
+      "http://localhost:5000/api/payment/webhook";
   }
 
   /**
@@ -52,13 +56,11 @@ class CashfreeService {
       // Optional safety check - allow small differences for rounding
       const amountDifference = Math.abs(bookingTotal - orderAmount);
       if (amountDifference > 1) {
-        // Allow ₹1 difference for rounding
         console.warn("Amount mismatch:", {
           bookingTotal,
           orderAmount,
           difference: amountDifference,
         });
-        // Use booking total as the source of truth
         orderAmount = bookingTotal;
       }
 
@@ -81,6 +83,7 @@ class CashfreeService {
           customer_phone: user.phone || "9999999999",
         },
         order_meta: {
+          // Use proper Cashfree template variables
           return_url: `${this.returnUrl}?order_id={order_id}&booking_id=${booking._id}`,
           notify_url: this.notifyUrl,
         },
@@ -119,6 +122,14 @@ class CashfreeService {
 
       await booking.save();
 
+      console.log("Debug payment amounts:", {
+        bookingId,
+        providedOrderAmount: orderAmount,
+        storedBookingTotal: booking.pricing?.total,
+        totalAmount: booking.totalAmount,
+        difference: Math.abs((booking.pricing?.total || 0) - orderAmount),
+      });
+
       return {
         orderId: orderId,
         paymentSessionId: response.data.payment_session_id,
@@ -131,7 +142,6 @@ class CashfreeService {
     } catch (error) {
       console.error("Error creating Cashfree order:", error);
 
-      // Provide more detailed error messages
       if (error.response) {
         console.error("Cashfree API Error:", error.response.data);
         throw new Error(
@@ -146,18 +156,19 @@ class CashfreeService {
   }
 
   /**
-   * Verify payment signature
+   * Verify payment signature for webhook
    * @param {Object} payload - Webhook payload
    * @param {String} signature - Signature sent by Cashfree
    * @returns {Boolean}
    */
   verifySignature(payload, signature) {
     try {
-      const data = `${payload.orderId}${payload.orderAmount}${payload.referenceId}${payload.txStatus}${payload.paymentMode}${payload.txMsg}${payload.txTime}`;
+      // For Cashfree v3 API, construct signature string differently
+      const signatureData = JSON.stringify(payload);
 
       const expectedSignature = crypto
         .createHmac("sha256", this.secretKey)
-        .update(data)
+        .update(signatureData)
         .digest("hex");
 
       return expectedSignature === signature;
@@ -199,29 +210,57 @@ class CashfreeService {
    */
   async processWebhook(webhookData) {
     try {
-      const booking = await Booking.findOne({
-        "payment.orderId": webhookData.data.order.order_id,
-      });
+      console.log("Processing webhook data:", webhookData);
 
-      if (!booking) {
-        throw new Error("Booking not found for the given order ID");
-      }
+      // Handle different webhook event types
+      const eventType = webhookData.type;
 
-      const paymentInfo = webhookData.data.payment;
+      if (eventType === "PAYMENT_SUCCESS_WEBHOOK") {
+        const paymentData = webhookData.data;
+        const orderId = paymentData.order?.order_id;
 
-      booking.payment.status = paymentInfo.payment_status.toLowerCase();
-      booking.payment.paymentId = paymentInfo.cf_payment_id;
-      booking.payment.method = paymentInfo.payment_method;
-      booking.payment.paidAt = new Date();
+        if (!orderId) {
+          throw new Error("Order ID not found in webhook data");
+        }
 
-      if (paymentInfo.payment_status === "SUCCESS") {
+        const booking = await Booking.findOne({
+          "payment.orderId": orderId,
+        });
+
+        if (!booking) {
+          throw new Error("Booking not found for the given order ID");
+        }
+
+        // Update booking with successful payment
+        booking.payment.status = "paid";
+        booking.payment.paymentId = paymentData.payment?.cf_payment_id;
+        booking.payment.method = paymentData.payment?.payment_method?.type;
+        booking.payment.paidAt = new Date();
         booking.status = "confirmed";
-      } else if (paymentInfo.payment_status === "FAILED") {
-        booking.status = "payment_failed";
+
+        await booking.save();
+        console.log("Booking updated successfully for order:", orderId);
+
+        return booking;
+      } else if (eventType === "PAYMENT_FAILED_WEBHOOK") {
+        const paymentData = webhookData.data;
+        const orderId = paymentData.order?.order_id;
+
+        const booking = await Booking.findOne({
+          "payment.orderId": orderId,
+        });
+
+        if (booking) {
+          booking.payment.status = "failed";
+          booking.status = "payment_failed";
+          await booking.save();
+        }
+
+        return booking;
       }
 
-      await booking.save();
-      return booking;
+      console.log("Unhandled webhook event type:", eventType);
+      return null;
     } catch (error) {
       console.error("Error processing webhook:", error);
       throw new Error("Failed to process payment webhook");

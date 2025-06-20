@@ -223,7 +223,7 @@ const BookingCard = ({ booking }) => {
                   onClick={handleCancelBooking}
                   className="flex-1 text-xs sm:text-sm h-8 sm:h-9 border-red-200 text-red-600 hover:bg-red-50"
                 >
-                  <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                  {/* <X className="h-3 w-3 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" /> */}
                   Cancel Booking
                 </Button>
               )}

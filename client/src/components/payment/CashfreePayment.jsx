@@ -95,7 +95,7 @@ const CashfreePayment = ({ booking, onSuccess, onClose }) => {
       <div className="space-y-2">
         <div className="font-medium">Payment Amount</div>
         <div className="text-2xl font-bold flex items-center">
-          <IndianRupee className="h-5 w-5 mr-1" />
+          {/* <IndianRupee className="h-5 w-5 mr-1" /> */}
           {displayAmount ? formatPrice(displayAmount, "INR") : "Loading..."}
         </div>
       </div>

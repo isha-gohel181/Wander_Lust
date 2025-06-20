@@ -1,4 +1,3 @@
-//server/src/routes/payment.js
 const express = require("express");
 const { requireAuth, getUserFromClerk } = require("../middleware/auth");
 const {
@@ -10,11 +9,11 @@ const {
 
 const router = express.Router();
 
-// Protected routes - need authentication
+// Protected payment routes
 router.post("/create-order", requireAuth, getUserFromClerk, createPaymentOrder);
 router.get("/status/:orderId", requireAuth, getUserFromClerk, getPaymentStatus);
 
-// Public routes for callbacks and webhooks
+// Public routes for external callbacks
 router.post("/webhook", handleWebhook);
 router.get("/return", handlePaymentReturn);
 

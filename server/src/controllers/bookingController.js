@@ -125,6 +125,16 @@ const createBooking = async (req, res) => {
     await booking.populate(BOOKING_POPULATE_OPTIONS);
 
     res.status(201).json(booking);
+    // Backend - add to bookingController.js
+    console.log("BACKEND pricing breakdown:", {
+      basePrice: property.pricing.basePrice,
+      nights,
+      subtotal,
+      cleaningFee,
+      serviceFee,
+      taxes,
+      total,
+    });
   } catch (error) {
     console.error("Create booking error:", error);
     res.status(500).json({ message: "Failed to create booking" });
@@ -227,7 +237,9 @@ const updateBookingStatus = async (req, res) => {
     await booking.save();
 
     // 🔥 CRITICAL FIX: Populate the booking before returning it
-    const updatedBooking = await Booking.findById(id).populate(BOOKING_POPULATE_OPTIONS);
+    const updatedBooking = await Booking.findById(id).populate(
+      BOOKING_POPULATE_OPTIONS
+    );
 
     res.json(updatedBooking);
   } catch (error) {
@@ -246,7 +258,9 @@ const getBooking = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const booking = await Booking.findById(id).populate(BOOKING_POPULATE_OPTIONS);
+    const booking = await Booking.findById(id).populate(
+      BOOKING_POPULATE_OPTIONS
+    );
 
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });

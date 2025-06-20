@@ -51,12 +51,15 @@ const BookingForm = ({ property, onBookingSuccess }) => {
   });
 
   const nights = calculateNights(bookingData.checkIn, bookingData.checkOut);
+  const serviceFee =
+    nights > 0 ? Math.round(property.pricing.basePrice * nights * 0.14) : 0;
   const pricing =
     nights > 0
       ? calculateTotalPrice(
           property.pricing.basePrice,
           nights,
-          property.pricing.cleaningFee
+          property.pricing.cleaningFee,
+          serviceFee // Include the service fee here
         )
       : null;
 
@@ -85,6 +88,24 @@ const BookingForm = ({ property, onBookingSuccess }) => {
       user
     );
   };
+
+  // Frontend - add to BookingForm.jsx
+  if (pricing) {
+    console.log("FRONTEND pricing breakdown:", {
+      basePrice: property.pricing.basePrice,
+      nights,
+      subtotal: property.pricing.basePrice * nights,
+      cleaningFee: property.pricing.cleaningFee || 0,
+      serviceFee: Math.round(property.pricing.basePrice * nights * 0.14),
+      taxes: Math.round(
+        (property.pricing.basePrice * nights +
+          (property.pricing.cleaningFee || 0) +
+          Math.round(property.pricing.basePrice * nights * 0.14)) *
+          0.08
+      ),
+      total: pricing.total,
+    });
+  }
 
   const handleBooking = async () => {
     if (!isFormValid()) {
@@ -185,19 +206,20 @@ const BookingForm = ({ property, onBookingSuccess }) => {
         </div>
 
         {/* Secure Payment Badge */}
-        <div className="flex items-center justify-center bg-blue-50 p-3 rounded-lg border border-blue-100">
+        {/* <div className="flex items-center justify-center bg-blue-50 p-3 rounded-lg border border-blue-100">
           <Shield className="h-4 w-4 text-blue-600 mr-2" />
           <span className="text-sm text-blue-800">
             Secure payment processing via Cashfree
           </span>
-        </div>
+        </div> */}
 
         {/* Success Message */}
-        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+        {/* <div className="bg-green-50 p-3 rounded-lg border border-green-200">
           <p className="text-sm text-green-700">
-            After payment completion, you'll be redirected to your bookings page.
+            After payment completion, you'll be redirected to your bookings
+            page.
           </p>
-        </div>
+        </div> */}
 
         {/* Cashfree Payment Component */}
         <CashfreePayment
@@ -255,7 +277,7 @@ const BookingForm = ({ property, onBookingSuccess }) => {
                   : "Select date"}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0 " align="start">
               <CalendarComponent
                 mode="single"
                 selected={bookingData.checkOut}
@@ -282,7 +304,7 @@ const BookingForm = ({ property, onBookingSuccess }) => {
               className="w-full justify-start text-left font-normal"
             >
               <Users className="mr-2 h-4 w-4" />
-             {totalGuests === 1 ? "1 guest" : `${totalGuests} guests`}
+              {totalGuests === 1 ? "1 guest" : `${totalGuests} guests`}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80">

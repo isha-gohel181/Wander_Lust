@@ -1,33 +1,23 @@
 //server/src/controllers/paymentController.js
-const cashfreeService = require("../services/cashfreeService");
 const Booking = require("../models/Booking");
-const User = require("../models/User");
+const cashfreeService = require("../services/cashfreeService");
 
-/**
- * Create a payment order
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- */
 const createPaymentOrder = async (req, res) => {
   try {
     const { bookingId, orderAmount } = req.body;
+    const userId = req.user.id;
 
-    if (!bookingId || !orderAmount) {
-      return res
-        .status(400)
-        .json({ message: "Booking ID and Order Amount are required" });
-    }
+    // Verify the booking belongs to the user
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      guest: userId,
+    });
 
-    const booking = await Booking.findById(bookingId);
     if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
-
-    const user = await User.findOne({ clerkId: req.clerkId });
-    if (!user || booking.guest.toString() !== user._id.toString()) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized to access this booking" });
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found or access denied",
+      });
     }
 
     const orderData = await cashfreeService.createOrder({
@@ -35,137 +25,112 @@ const createPaymentOrder = async (req, res) => {
       orderAmount,
     });
 
-    res.json(orderData);
+    res.json({
+      success: true,
+      ...orderData,
+    });
   } catch (error) {
-    console.error("Create payment order error:", error);
-    res
-      .status(500)
-      .json({ message: error.message || "Failed to create payment order" });
+    console.error("Error creating payment order:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create payment order",
+    });
   }
 };
 
-
-/**
- * Get payment status
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- */
 const getPaymentStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
+    const userId = req.user?.id;
 
-    if (!orderId) {
-      return res.status(400).json({ message: "Order ID is required" });
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
     }
 
-    const orderStatus = await cashfreeService.getOrderStatus(orderId);
+    const booking = await Booking.findOne({
+      "payment.orderId": orderId,
+      guest: userId,
+    }).populate("property", "title location");
 
-    // Find and update booking
-    const booking = await Booking.findOne({ "payment.orderId": orderId });
-    if (booking) {
-      booking.payment.status = orderStatus.order_status.toLowerCase();
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment record not found or access denied",
+      });
+    }
 
-      if (orderStatus.order_status === "PAID") {
-        booking.status = "confirmed";
-        booking.payment.paidAt = new Date();
-      } else if (
-        orderStatus.order_status === "EXPIRED" ||
-        orderStatus.order_status === "CANCELLED"
-      ) {
-        booking.status = "payment_failed";
+    try {
+      const cashfreeStatus = await cashfreeService.getOrderStatus(orderId);
+
+      if (cashfreeStatus?.order_status) {
+        const cfStatus = cashfreeStatus.order_status.toLowerCase();
+
+        if (cfStatus !== booking.payment.status) {
+          booking.payment.status = cfStatus === "paid" ? "paid" : cfStatus;
+
+          if (cfStatus === "paid") {
+            booking.status = "confirmed";
+          }
+
+          await booking.save();
+        }
       }
-
-      await booking.save();
+    } catch (err) {
+      console.error("Error fetching status from Cashfree:", err.message);
     }
 
     res.json({
-      orderId: orderId,
-      status: orderStatus.order_status,
-      amount: orderStatus.order_amount,
-      currency: orderStatus.order_currency || "INR", // Ensure currency is always returned
-      booking: booking ? booking._id : null,
+      success: true,
+      orderId: booking.payment.orderId,
+      status: booking.payment.status,
+      amount: booking.payment.amount,
+      currency: booking.payment.currency,
+      paymentId: booking.payment.paymentId,
+      method: booking.payment.method,
+      paidAt: booking.payment.paidAt,
+      booking: booking._id,
+      property: booking.property,
     });
   } catch (error) {
-    console.error("Get payment status error:", error);
-    res
-      .status(500)
-      .json({ message: error.message || "Failed to get payment status" });
+    console.error("Error getting payment status:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to get payment status",
+    });
   }
 };
 
-/**
- * Process payment webhook
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- */
 const handleWebhook = async (req, res) => {
   try {
     const webhookData = req.body;
-    const signature = req.headers["x-webhook-signature"];
 
-    // Verify signature (optional but recommended)
-    // const isValid = cashfreeService.verifySignature(webhookData, signature);
-    // if (!isValid) {
-    //   return res.status(400).json({ message: 'Invalid signature' });
-    // }
+    await cashfreeService.processWebhook(webhookData);
 
-    const booking = await cashfreeService.processWebhook(webhookData);
-
-    res.json({ success: true, bookingId: booking._id });
+    res.json({
+      success: true,
+      message: "Webhook processed successfully",
+    });
   } catch (error) {
-    console.error("Webhook processing error:", error);
-    res
-      .status(500)
-      .json({ message: error.message || "Failed to process webhook" });
+    console.error("Error processing webhook:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to process webhook",
+    });
   }
 };
 
-/**
- * Payment success callback
- * @param {Object} req - Request object
- * @param {Object} res - Response object
- */
 const handlePaymentReturn = async (req, res) => {
   try {
     const { order_id, booking_id } = req.query;
-
-    if (!order_id || !booking_id) {
-      return res
-        .status(400)
-        .json({ message: "Order ID and Booking ID are required" });
-    }
-
-    const orderStatus = await cashfreeService.getOrderStatus(order_id);
-
-    // Find and update booking
-    const booking = await Booking.findById(booking_id);
-    if (booking) {
-      booking.payment.status = orderStatus.order_status.toLowerCase();
-
-      if (orderStatus.order_status === "PAID") {
-        booking.status = "confirmed";
-        booking.payment.paidAt = new Date();
-      } else if (
-        orderStatus.order_status === "EXPIRED" ||
-        orderStatus.order_status === "CANCELLED"
-      ) {
-        booking.status = "payment_failed";
-      }
-
-      await booking.save();
-    }
-
-    // Redirect to client
-    res.redirect(
-      `${process.env.CLIENT_URL}/payment/success?orderId=${order_id}&bookingId=${booking_id}&status=${orderStatus.order_status}`
-    );
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const redirectUrl = `${frontendUrl}/payment/success?order_id=${order_id}&booking_id=${booking_id}`;
+    res.redirect(redirectUrl);
   } catch (error) {
-    console.error("Payment return error:", error);
-    res.redirect(
-      `${process.env.CLIENT_URL}/payment/error?message=${encodeURIComponent(
-        error.message
-      )}`
-    );
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    res.redirect(`${frontendUrl}/payment/error`);
   }
 };
 
