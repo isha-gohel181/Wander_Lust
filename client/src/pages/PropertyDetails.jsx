@@ -1,4 +1,3 @@
-// client/src/pages/PropertyDetails.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -20,6 +19,7 @@ import {
   ArrowLeft,
   Share,
   Flag,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,13 +41,17 @@ import { formatPrice, getAmenityIcon } from "@/utils/helpers";
 import PropertyImageGallery from "@/components/property/PropertyImageGallery";
 import ContactHostModal from "@/components/messages/ContactHostModal";
 import toast from "react-hot-toast";
+import { useUser, SignInButton } from "@clerk/clerk-react";
 
 const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const { property, loading, error } = useProperty(id);
+
+  // Always call hooks at the top level - no conditional hook calls
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { user } = useAuth();
+
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
@@ -56,13 +60,16 @@ const PropertyDetails = () => {
   const [mapError, setMapError] = React.useState(null);
   const [isMapLoading, setIsMapLoading] = React.useState(false);
 
+  // Only determine userIsHost if user is loaded and property is loaded
   const userIsHost = user && property && user._id === property.host._id;
+
+  // Only check bookings if user is authenticated and has bookings data
   const hasStayedAtProperty =
     user &&
     user.bookings?.some(
-      (b) => b.propertyId === property._id && b.status === "completed"
+      (b) => b.propertyId === property?._id && b.status === "completed"
     );
-    
+
   const amenityIcons = {
     wifi: <Wifi className="h-4 w-4" />,
     free_parking: <Car className="h-4 w-4" />,
@@ -80,10 +87,26 @@ const PropertyDetails = () => {
       return;
     }
 
+    if (authLoading) {
+      toast.error("Please wait while we load your account");
+      return;
+    }
+
+    if (!property?._id) {
+      toast.error("Property not found");
+      return;
+    }
+
     try {
       await toggleWishlist(property._id);
+      toast.success(
+        isInWishlist(property._id)
+          ? "Removed from wishlist"
+          : "Added to wishlist"
+      );
     } catch (error) {
       console.error("Wishlist toggle error:", error);
+      toast.error("Failed to update wishlist");
     }
   };
 
@@ -105,6 +128,7 @@ const PropertyDetails = () => {
     }
   };
 
+  // Show loading state while property is loading
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -136,6 +160,7 @@ const PropertyDetails = () => {
     );
   }
 
+  // Show error state only if property fetch failed (not auth-related)
   if (error || !property) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -175,10 +200,18 @@ const PropertyDetails = () => {
               <Share className="h-4 w-4 mr-2" />
               Share
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleWishlistToggle}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleWishlistToggle}
+              disabled={authLoading}
+              title={user ? undefined : "Sign in to save"}
+            >
               <Heart
                 className={`h-4 w-4 mr-2 ${
-                  isInWishlist(property._id) ? "fill-red-500 text-red-500" : ""
+                  user && !authLoading && property && isInWishlist(property._id)
+                    ? "fill-red-500 text-red-500"
+                    : ""
                 }`}
               />
               Save
@@ -436,8 +469,8 @@ const PropertyDetails = () => {
                 </div>
               )}
 
-              {/* Review CTA for eligible users */}
-              {user && !userIsHost && (
+              {/* Review CTA for eligible users - only show if user is authenticated */}
+              {user && !authLoading && !userIsHost && (
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                   <h4 className="font-medium text-blue-800 mb-2">
                     Share your experience
@@ -462,6 +495,21 @@ const PropertyDetails = () => {
                   >
                     Write a review
                   </Button>
+                </div>
+              )}
+
+              {/* Sign in prompt for unauthenticated users */}
+              {!user && !authLoading && (
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="font-medium text-gray-800 mb-2">
+                    Join the community
+                  </h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Sign in to save properties, book stays, and write reviews.
+                  </p>
+                  <SignInButton mode="modal">
+                    <Button variant="outline">Sign In</Button>
+                  </SignInButton>
                 </div>
               )}
 
@@ -542,10 +590,23 @@ const PropertyDetails = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <BookingForm
-                    property={property}
-                    onBookingSuccess={() => navigate("/bookings")}
-                  />
+                  {!user && !authLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-600  mb-4">
+                        Sign in to book this property
+                      </p>
+                      <SignInButton mode="modal">
+                        <Button className="w-full bg-gradient-to-r from-wanderlust-500 to-wanderlust-600">
+                          Sign In to Book
+                        </Button>
+                      </SignInButton>
+                    </div>
+                  ) : (
+                    <BookingForm
+                      property={property}
+                      onBookingSuccess={() => navigate("/bookings")}
+                    />
+                  )}
                 </CardContent>
               </Card>
 
@@ -610,7 +671,6 @@ const PropertyDetails = () => {
       )}
     </div>
   );
-
 };
 
 export default PropertyDetails;
