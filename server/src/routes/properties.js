@@ -23,7 +23,7 @@ router.get("/:id", getProperty);
 // PROTECTED ROUTES (authentication required)
 // Apply auth middleware to specific routes that need it
 router.get("/host/my-properties", requireAuth, getUserFromClerk, requireHost, getHostProperties);
-router.post("/", requireAuth, getUserFromClerk, requireHost, validateProperty, createProperty);
+router.post("/",requireAuth, getUserFromClerk, requireHost, validateProperty, createProperty);
 router.put("/:id", requireAuth, getUserFromClerk, requireHost, validateProperty, updateProperty);
 router.delete("/:id", requireAuth, getUserFromClerk, requireHost, deleteProperty);
 router.post(

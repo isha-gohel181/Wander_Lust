@@ -1,3 +1,4 @@
+//server/src/controllers/authController.js
 const { Webhook } = require("svix");
 const User = require("../models/User");
 
@@ -15,6 +16,9 @@ const handleClerkWebhook = async (req, res) => {
 
     const wh = new Webhook(WEBHOOK_SECRET);
     let evt;
+
+    console.log("📩 Headers:", headers);
+    console.log("📦 Raw Payload Buffer:", payload);
 
     try {
       evt = wh.verify(payload, headers);
@@ -34,19 +38,25 @@ const handleClerkWebhook = async (req, res) => {
         image_url,
       } = evt.data;
 
-      const user = new User({
-        clerkId,
-        email: email_addresses[0]?.email_address,
-        firstName: first_name || "",
-        lastName: last_name || "",
-        avatar: image_url || "",
-        role: "guest",
-      });
+      const existingUser = await User.findOne({ clerkId });
 
-      await user.save();
-      console.log("✅ User created:", user._id);
+      if (existingUser) {
+        console.log("⚠️ User already exists:", clerkId);
+      } else {
+        const user = new User({
+          clerkId,
+          email: email_addresses[0]?.email_address,
+          firstName: first_name || "",
+          lastName: last_name || "",
+          avatar: image_url || "",
+          role: "guest",
+        });
+
+        await user.save();
+        console.log("✅ User created:", user._id);
+      }
     }
-
+    
     if (eventType === "user.updated") {
       const {
         id: clerkId,

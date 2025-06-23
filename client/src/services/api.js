@@ -1,16 +1,19 @@
+//client/src/services/api.js
 import axios from "axios";
+import toast from "react-hot-toast"; // ✅ import toast
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  import.meta.env.VITE_API_URL || "http://localhost:10000/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 30000, // 30 seconds
 });
 
+// Request Interceptor: attach Clerk token if available
 api.interceptors.request.use(
   async (config) => {
     try {
@@ -37,23 +40,33 @@ api.interceptors.request.use(
 
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
+// ✅ Response Interceptor with Toast for Errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message =
-      error.response?.data?.message || error.message || "Something went wrong";
+    let message = "Something went wrong. Please try again later.";
 
-    if (error.response?.status === 401) {
-      console.error("Unauthorized access - check authentication.");
+    if (error.code === "ECONNABORTED") {
+      message = "Server is taking too long to respond. Please try again.";
+    } else if (error.response?.status === 401) {
+      message = "Unauthorized. Please sign in again.";
+    } else if (error.response?.status === 404) {
+      message = "Resource not found.";
+    } else if (error.response?.status === 429) {
+      message = "Too many requests. Please slow down.";
+    } else if (error.response?.data?.message) {
+      message = error.response.data.message;
     }
 
-    if (error.response?.status === 404) {
-      console.error("Route not found - check endpoint URL.");
+    // ✅ Show the error as a toast
+    if (typeof window !== "undefined") {
+      toast.error(message, {
+        duration: 4000,
+        position: "top-right",
+      });
     }
 
     return Promise.reject(new Error(message));

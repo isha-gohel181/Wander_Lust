@@ -1,4 +1,3 @@
-// server/src/config/socket.js
 const socketIO = require("socket.io");
 const jwt = require("jsonwebtoken");
 
@@ -7,41 +6,41 @@ let io;
 const initializeSocket = (server) => {
   io = socketIO(server, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:5173",
+      origin: process.env.FRONTEND_URL || "http://localhost:5173",
       methods: ["GET", "POST"],
       credentials: true,
     },
   });
 
-  // Socket.IO middleware for authentication
+  // Middleware (auth optional in dev mode)
   io.use((socket, next) => {
-    // Get token from handshake auth or headers
     const token = socket.handshake.auth.token;
 
+    // In development mode, allow all connections without verification
+    if (process.env.NODE_ENV === "development" || !process.env.JWT_SECRET) {
+      socket.userId = "dev_user"; // Dummy ID
+      return next();
+    }
+
     if (!token) {
-      return next(new Error("Authentication error"));
+      return next(new Error("Authentication error: No token"));
     }
 
     try {
-      // Verify token with Clerk
-      // Note: This would need to be replaced with proper Clerk verification
-      // For simplicity, we're using a placeholder verification
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.userId = decoded.sub;
+      socket.userId = decoded.sub || decoded.id; // use .sub or .id depending on how you signed
       next();
     } catch (error) {
-      next(new Error("Authentication error"));
+      console.error("JWT Error:", error.message);
+      return next(new Error("Authentication error: Invalid token"));
     }
   });
 
-  // Handle connections
   io.on("connection", (socket) => {
-    console.log(`User connected: ${socket.userId}`);
+    console.log(`✅ User connected: ${socket.userId}`);
 
-    // Add the user to their own room for targeted messages
     socket.join(`user:${socket.userId}`);
 
-    // Listen for joining a conversation
     socket.on("join_conversation", (conversationId) => {
       socket.join(`conversation:${conversationId}`);
       console.log(
@@ -49,20 +48,16 @@ const initializeSocket = (server) => {
       );
     });
 
-    // Listen for leaving a conversation
     socket.on("leave_conversation", (conversationId) => {
       socket.leave(`conversation:${conversationId}`);
       console.log(`User ${socket.userId} left conversation ${conversationId}`);
     });
 
-    // Listen for new messages
     socket.on("send_message", (messageData) => {
-      // Broadcast to everyone in the conversation except sender
       socket
         .to(`conversation:${messageData.conversationId}`)
         .emit("receive_message", messageData);
 
-      // Also send to specific user if they're not in the conversation currently
       if (messageData.recipientId) {
         socket
           .to(`user:${messageData.recipientId}`)
@@ -74,7 +69,6 @@ const initializeSocket = (server) => {
       }
     });
 
-    // Listen for typing indicators
     socket.on("typing", (data) => {
       socket.to(`conversation:${data.conversationId}`).emit("user_typing", {
         userId: socket.userId,
@@ -82,9 +76,8 @@ const initializeSocket = (server) => {
       });
     });
 
-    // Handle disconnection
     socket.on("disconnect", () => {
-      console.log(`User disconnected: ${socket.userId}`);
+      console.log(`❌ User disconnected: ${socket.userId}`);
     });
   });
 

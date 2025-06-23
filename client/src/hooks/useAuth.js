@@ -1,4 +1,3 @@
-// client/src/hooks/useAuth.js
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { authService } from "../services/auth";
@@ -25,9 +24,23 @@ export const useAuth = () => {
         setUser(profile);
         setError(null);
       } catch (err) {
-        console.error("Failed to fetch user profile:", err);
-        setError(err.message);
-        // Create basic user object from Clerk data
+        // Handle timeout or server error gracefully
+        const isTimeout = err.message.toLowerCase().includes("timeout");
+        const isNetworkError = err.message.toLowerCase().includes("network");
+
+        if (isTimeout) {
+          toast.error("Server is taking too long. Showing limited access.");
+        } else if (isNetworkError) {
+          toast.error("Network error. Check your internet connection.");
+        } else {
+          toast.error("Failed to load profile. Showing limited access.");
+        }
+
+        if (import.meta.env.MODE === "development") {
+          console.error("Failed to fetch user profile:", err);
+        }
+
+        // Fallback to basic user info
         setUser({
           clerkId: clerkUser.id,
           email: clerkUser.primaryEmailAddress?.emailAddress,
@@ -36,6 +49,8 @@ export const useAuth = () => {
           avatar: clerkUser.imageUrl || "",
           role: "guest",
         });
+
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -51,7 +66,7 @@ export const useAuth = () => {
       toast.success("Profile updated successfully");
       return updatedUser;
     } catch (error) {
-      toast.error(error.message);
+      toast.error("Could not update profile. Try again later.");
       throw error;
     }
   };
@@ -63,7 +78,7 @@ export const useAuth = () => {
       toast.success("Welcome to hosting!");
       return response;
     } catch (error) {
-      toast.error(error.message);
+      toast.error("Something went wrong while becoming host.");
       throw error;
     }
   };

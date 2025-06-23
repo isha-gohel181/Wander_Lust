@@ -1,8 +1,8 @@
+//server/src/app.js
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-const rateLimit = require("express-rate-limit");
 const bodyParser = require("body-parser");
 require("dotenv").config();
 
@@ -43,7 +43,7 @@ app.use(
     origin: [
       process.env.FRONTEND_URL,
       "http://localhost:5173",
-      "http://localhost:3000",
+      "http://localhost:10000",
     ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
@@ -51,30 +51,10 @@ app.use(
   })
 );
 
-// Rate limiters
-app.use(
-  "/api/",
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: "Too many requests from this IP, please try again later.",
-    standardHeaders: true,
-    legacyHeaders: false,
-  })
-);
-
-const uploadLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: {
-    error: "Too many upload requests, please try again later.",
-  },
-});
-
 // Webhook handler (raw body)
 app.post(
   "/api/auth/webhook",
-  bodyParser.raw({ type: "*/*" }),
+  bodyParser.raw({ type: "application/json" }),
   handleClerkWebhook
 );
 
@@ -101,14 +81,8 @@ app.use("/api/payment", paymentRoutes);
 
 app.use("/api/users", requireAuth, getUserFromClerk, userRoutes);
 app.use("/api/bookings", requireAuth, getUserFromClerk, bookingRoutes);
-app.use("/api/reviews", requireAuth, getUserFromClerk, reviewRoutes);
-app.use(
-  "/api/upload",
-  requireAuth,
-  getUserFromClerk,
-  uploadLimiter,
-  uploadRoutes
-);
+app.use("/api/reviews",reviewRoutes);
+app.use("/api/upload", requireAuth, getUserFromClerk, uploadRoutes);
 app.use("/api/messages", messageRoutes);
 
 // 404 fallback
@@ -136,7 +110,7 @@ process.on("SIGINT", () => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 1000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV}`);
 });

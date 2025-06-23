@@ -1,39 +1,31 @@
-// server/src/controllers/reviewController.js
 const Review = require("../models/Review");
 const Booking = require("../models/Booking");
 const Property = require("../models/Property");
 const User = require("../models/User");
 
-// Create a review
+// ✅ Create a review
 const createReview = async (req, res) => {
   try {
     const { bookingId, ratings, comment } = req.body;
 
     const user = await User.findOne({ clerkId: req.clerkId });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
 
-    // Check if user made this booking
     if (booking.guest.toString() !== user._id.toString()) {
       return res
         .status(403)
         .json({ message: "You can only review your own bookings" });
     }
 
-    // Check if booking is completed
     if (booking.status !== "completed") {
       return res
         .status(400)
         .json({ message: "You can only review completed stays" });
     }
 
-    // Check if review already exists
     const existingReview = await Review.findOne({ booking: bookingId });
     if (existingReview) {
       return res
@@ -52,11 +44,9 @@ const createReview = async (req, res) => {
 
     await review.save();
 
-    // Update booking with review reference
     booking.review = review._id;
     await booking.save();
 
-    // Update property ratings
     await updatePropertyRatings(booking.property);
 
     await review.populate([
@@ -71,16 +61,13 @@ const createReview = async (req, res) => {
   }
 };
 
-// Get property reviews
+// ✅ Get all public reviews for a property
 const getPropertyReviews = async (req, res) => {
   try {
     const { propertyId } = req.params;
     const { page = 1, limit = 10 } = req.query;
 
-    const reviews = await Review.find({
-      property: propertyId,
-      isVisible: true,
-    })
+    const reviews = await Review.find({ property: propertyId, isVisible: true })
       .populate("guest", "firstName lastName avatar")
       .sort({ createdAt: -1 })
       .limit(limit * 1)
@@ -91,7 +78,7 @@ const getPropertyReviews = async (req, res) => {
       isVisible: true,
     });
 
-    res.json({
+    res.status(200).json({
       reviews,
       pagination: {
         currentPage: parseInt(page),
@@ -105,23 +92,18 @@ const getPropertyReviews = async (req, res) => {
   }
 };
 
-// Add host reply to review
+// ✅ Add host reply to a review
 const addHostReply = async (req, res) => {
   try {
     const { reviewId } = req.params;
     const { comment } = req.body;
 
     const user = await User.findOne({ clerkId: req.clerkId });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const review = await Review.findById(reviewId);
-    if (!review) {
-      return res.status(404).json({ message: "Review not found" });
-    }
+    if (!review) return res.status(404).json({ message: "Review not found" });
 
-    // Check if user is the host
     if (review.host.toString() !== user._id.toString()) {
       return res
         .status(403)
@@ -134,22 +116,20 @@ const addHostReply = async (req, res) => {
     };
 
     await review.save();
-
-    res.json(review);
+    res.status(200).json(review);
   } catch (error) {
     console.error("Add host reply error:", error);
     res.status(500).json({ message: "Failed to add host reply" });
   }
 };
 
-// Update property ratings helper function
+// ✅ Update average property ratings
 const updatePropertyRatings = async (propertyId) => {
   try {
     const reviews = await Review.find({
       property: propertyId,
       isVisible: true,
     });
-
     if (reviews.length === 0) return;
 
     const totals = {

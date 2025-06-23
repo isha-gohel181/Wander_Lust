@@ -1,9 +1,16 @@
+//client/src/pages/search.jsx
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Filter, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import FilterSidebar from "@/components/search/FilterSidebar";
 import PropertyGrid from "@/components/property/PropertyGrid";
 import { useProperties } from "@/hooks/useProperties";
@@ -167,7 +174,16 @@ const Search = () => {
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[85vw] sm:w-80 p-0">
+                <SheetContent
+                  side="left"
+                  className="w-[85vw] sm:w-80 p-0 overflow-y-auto max-h-screen"
+                >
+                  {/* Accessible Title and Description */}
+                  <SheetTitle className="sr-only">Filters</SheetTitle>
+                  <SheetDescription className="sr-only">
+                    Use filters to narrow your property search.
+                  </SheetDescription>
+
                   <FilterSidebar
                     filters={filters}
                     updateFilters={handleFiltersUpdate}

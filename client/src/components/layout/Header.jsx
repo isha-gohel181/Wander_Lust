@@ -1,4 +1,3 @@
-//client/src/components/layout/Header.jsx
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -16,7 +15,7 @@ import {
   User,
   Settings,
   Home as HomeIcon,
-  MessageSquare, // Add MessageSquare icon
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,17 +27,30 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import SearchBar from "../search/SearchBar";
-import { useMessages } from "@/hooks/useMessages"; // Import useMessages hook
+import { useMessages } from "@/hooks/useMessages";
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // mobile menu
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false); // app menu
+  const [clerkMenuOpen, setClerkMenuOpen] = useState(false); // clerk menu
   const { user } = useUser();
   const navigate = useNavigate();
-  const { unreadCount } = useMessages(); // Get unread message count
+  const { unreadCount } = useMessages();
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
+  // Ensure only one menu is open at a time (desktop)
+  const openProfileMenu = () => {
+    setProfileMenuOpen(true);
+    setClerkMenuOpen(false);
+  };
+  const openClerkMenu = () => {
+    setClerkMenuOpen(true);
+    setProfileMenuOpen(false);
+  };
+  const closeMenus = () => {
+    setProfileMenuOpen(false);
+    setClerkMenuOpen(false);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -84,15 +96,31 @@ const Header = () => {
                 </Button>
               </Link>
 
-              <DropdownMenu>
+              {/* App Profile Menu */}
+              <DropdownMenu
+                open={profileMenuOpen}
+                onOpenChange={(open) => {
+                  if (open) openProfileMenu();
+                  else setProfileMenuOpen(false);
+                }}
+              >
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="relative">
-                    <Menu className="h-4 w-4 mr-2" />
-                    <img
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="relative h-8 w-8"
+                    aria-label="Open app menu"
+                    onClick={() => {
+                      if (profileMenuOpen) setProfileMenuOpen(false);
+                      else openProfileMenu();
+                    }}
+                  >
+                    <Menu className="h-4 w-4"/>
+                    {/* <img
                       src={user?.imageUrl}
                       alt="Profile"
                       className="w-6 h-6 rounded-full"
-                    />
+                    /> */}
                     {unreadCount > 0 && (
                       <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-wanderlust-500 text-white">
                         {unreadCount}
@@ -100,12 +128,22 @@ const Header = () => {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <DropdownMenuContent align="end" className="w-56 z-[9999]">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/profile");
+                      closeMenus();
+                    }}
+                  >
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/messages")}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/messages");
+                      closeMenus();
+                    }}
+                  >
                     <MessageSquare className="mr-2 h-4 w-4" />
                     <span>Messages</span>
                     {unreadCount > 0 && (
@@ -114,32 +152,49 @@ const Header = () => {
                       </Badge>
                     )}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/bookings")}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/bookings");
+                      closeMenus();
+                    }}
+                  >
                     <HomeIcon className="mr-2 h-4 w-4" />
                     <span>My Bookings</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/wishlist")}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/wishlist");
+                      closeMenus();
+                    }}
+                  >
                     <Heart className="mr-2 h-4 w-4" />
                     <span>Wishlist</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/dashboard");
+                      closeMenus();
+                    }}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Host Dashboard</span>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <div className="p-2">
-                    <UserButton
-                      afterSignOutUrl="/"
-                      appearance={{
-                        elements: {
-                          avatarBox: "w-full",
-                          userButtonTrigger: "w-full justify-start",
-                        },
-                      }}
-                    />
-                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Clerk UserButton, separate */}
+              <div>
+                <UserButton
+                  userProfileMode="modal"
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-8 h-8",
+                      userButtonTrigger: "flex items-center justify-center p-0",
+                    },
+                  }}
+                />
+              </div>
             </SignedIn>
           </div>
 
@@ -148,7 +203,7 @@ const Header = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={toggleSearch}
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="p-2"
             >
               <Search className="h-5 w-5" />
@@ -157,7 +212,7 @@ const Header = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={toggleMenu}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2 relative"
             >
               {isMenuOpen ? (
@@ -178,7 +233,7 @@ const Header = () => {
 
         {/* Mobile Search */}
         {isSearchOpen && (
-          <div className="lg:hidden py-4 border-t border-gray-200">
+          <div className="lg:hidden py-4 h-4 border-gray-200">
             <SearchBar onClose={() => setIsSearchOpen(false)} />
           </div>
         )}
@@ -204,7 +259,7 @@ const Header = () => {
               </SignedOut>
 
               <SignedIn>
-                <Link to="/profile" onClick={toggleMenu}>
+                <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
                   <Button
                     variant="ghost"
                     className="justify-start w-full"
@@ -214,7 +269,7 @@ const Header = () => {
                     Profile
                   </Button>
                 </Link>
-                <Link to="/messages" onClick={toggleMenu}>
+                <Link to="/messages" onClick={() => setIsMenuOpen(false)}>
                   <Button
                     variant="ghost"
                     className="justify-start w-full"
@@ -229,7 +284,7 @@ const Header = () => {
                     )}
                   </Button>
                 </Link>
-                <Link to="/bookings" onClick={toggleMenu}>
+                <Link to="/bookings" onClick={() => setIsMenuOpen(false)}>
                   <Button
                     variant="ghost"
                     className="justify-start w-full"
@@ -239,7 +294,7 @@ const Header = () => {
                     My Bookings
                   </Button>
                 </Link>
-                <Link to="/wishlist" onClick={toggleMenu}>
+                <Link to="/wishlist" onClick={() => setIsMenuOpen(false)}>
                   <Button
                     variant="ghost"
                     className="justify-start w-full"
@@ -249,7 +304,7 @@ const Header = () => {
                     Wishlist
                   </Button>
                 </Link>
-                <Link to="/dashboard" onClick={toggleMenu}>
+                <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                   <Button
                     variant="ghost"
                     className="justify-start w-full"
@@ -266,7 +321,7 @@ const Header = () => {
                       elements: {
                         avatarBox: "w-8 h-8",
                         userButtonTrigger:
-                          "flex items-center justify-start w-full p-2",
+                            "flex items-center justify-start w-full p-2",
                       },
                     }}
                   />
@@ -275,7 +330,7 @@ const Header = () => {
             </div>
           </div>
         )}
-      </div>
+      </div>  
     </header>
   );
 };

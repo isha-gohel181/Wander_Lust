@@ -85,8 +85,8 @@ const Profile = () => {
                 <Avatar className="h-24 w-24">
                   <AvatarImage src={user.avatar} />
                   <AvatarFallback className="text-2xl">
-                    {user.firstName?.[0]}
-                    {user.lastName?.[0]}
+                    {(user.firstName?.[0] || "") + (user.lastName?.[0] || "") ||
+                      "U"}
                   </AvatarFallback>
                 </Avatar>
                 <Button
@@ -101,7 +101,9 @@ const Profile = () => {
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
                   <h1 className="text-2xl font-bold text-gray-900">
-                    {user.firstName} {user.lastName}
+                    {[user.firstName, user.lastName]
+                      .filter(Boolean)
+                      .join(" ") || "Unnamed User"}
                   </h1>
                   <Badge variant={isHost ? "default" : "secondary"}>
                     {isHost ? "Host" : "Guest"}
@@ -158,6 +160,7 @@ const Profile = () => {
                         <Input
                           id="firstName"
                           value={profileData.firstName}
+                          maxLength={50}
                           onChange={(e) =>
                             setProfileData((prev) => ({
                               ...prev,
@@ -172,6 +175,7 @@ const Profile = () => {
                         <Input
                           id="lastName"
                           value={profileData.lastName}
+                          maxLength={50}
                           onChange={(e) =>
                             setProfileData((prev) => ({
                               ...prev,
@@ -189,6 +193,8 @@ const Profile = () => {
                         id="phone"
                         type="tel"
                         value={profileData.phone}
+                        pattern="^[0-9]{10}$"
+                        title="Enter a valid 10-digit phone number"
                         onChange={(e) =>
                           setProfileData((prev) => ({
                             ...prev,
@@ -264,7 +270,7 @@ const Profile = () => {
               </Card>
             </TabsContent>
 
-        {/* 
+            {/* 
         <TabsContent value="settings">
           <Card>
             <CardHeader>
@@ -337,7 +343,6 @@ const Profile = () => {
           </Card>
         </TabsContent>
         */}
-
           </Tabs>
         </div>
       </div>

@@ -1,3 +1,4 @@
+//server/src/middleware/validation.js
 const { body, validationResult } = require("express-validator");
 
 // Generic validation error handler with detailed logging

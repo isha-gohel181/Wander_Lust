@@ -81,14 +81,6 @@ const FilterSidebar = ({
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b">
         <h2 className="text-lg font-semibold">Filters</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClose}
-          className="lg:hidden"
-        >
-          <X className="h-4 w-4" />
-        </Button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8">

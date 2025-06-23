@@ -18,7 +18,8 @@ const ReviewSection = ({ propertyId }) => {
 
   useEffect(() => {
     fetchReviews();
-  }, [propertyId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId, page]);
 
   const fetchReviews = async () => {
     try {
@@ -54,12 +55,15 @@ const ReviewSection = ({ propertyId }) => {
   };
 
   const handleReply = async (reviewId, comment) => {
+    if (!user || (user.role !== "host" && user.role !== "admin")) {
+      toast.error("Only hosts or admins can reply to reviews.");
+      return;
+    }
+
     try {
       await reviewService.addHostReply(reviewId, comment);
-      // Refresh reviews to show the new reply
-      setPage(1);
-      fetchReviews();
       toast.success("Reply posted successfully!");
+      setPage(1); // Reset to first page to refetch reviews
     } catch (error) {
       toast.error("Failed to post reply");
       throw error;
@@ -68,7 +72,6 @@ const ReviewSection = ({ propertyId }) => {
 
   const loadMore = () => {
     setPage((prev) => prev + 1);
-    fetchReviews();
   };
 
   if (loading && reviews.length === 0) {

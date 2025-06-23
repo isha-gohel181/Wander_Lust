@@ -1,3 +1,4 @@
+//client/src/services/auth.js
 import api from "./api";
 
 export const authService = {
