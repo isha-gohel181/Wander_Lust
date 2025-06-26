@@ -38,15 +38,24 @@ app.use(
   })
 );
 
+const allowedOrigins = [
+  "https://wander-lust-red.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:10000",
+];
+
 app.use(
   cors({
-    origin: [
-      process.env.FRONTEND_URL,
-      "http://localhost:5173",
-      "http://localhost:10000",
-    ],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (e.g., mobile apps, curl, etc.)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS policy error: Not allowed by CORS"));
+      }
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
