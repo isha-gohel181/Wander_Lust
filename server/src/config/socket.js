@@ -1,3 +1,4 @@
+//server/src/config/socket.js
 const socketIO = require("socket.io");
 const jwt = require("jsonwebtoken");
 

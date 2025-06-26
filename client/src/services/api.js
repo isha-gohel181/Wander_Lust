@@ -43,7 +43,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ✅ Response Interceptor with Toast for Errors
+// Response Interceptor with Toast for Errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -61,7 +61,7 @@ api.interceptors.response.use(
       message = error.response.data.message;
     }
 
-    // ✅ Show the error as a toast
+    // Show the error as a toast
     if (typeof window !== "undefined") {
       toast.error(message, {
         duration: 4000,

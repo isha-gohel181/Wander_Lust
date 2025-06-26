@@ -64,10 +64,19 @@ const MessageChat = ({
     );
   }
 
-  const isUserHost = user?._id === conversation.property.host._id;
+  const isUserHost = user?._id === conversation.property?.host?._id;
   const otherPerson = isUserHost
     ? conversation.guest
-    : conversation.property.host;
+    : conversation.property?.host;
+
+  if (!otherPerson) {
+    return (
+      <div className="h-full flex items-center justify-center text-gray-500">
+        Unable to load user information.
+      </div>
+    );
+  }
+
   const isOtherPersonTyping = usersTyping && usersTyping[otherPerson._id];
 
   return (
@@ -76,18 +85,21 @@ const MessageChat = ({
       <div className="px-4 py-3 border-b flex items-center justify-between bg-white">
         <div className="flex items-center space-x-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={otherPerson.avatar} />
+            <AvatarImage
+              src={otherPerson?.avatar || "/default-avatar.png"}
+              alt="User Avatar"
+            />
             <AvatarFallback>
-              {otherPerson.firstName?.[0]}
-              {otherPerson.lastName?.[0]}
+              {otherPerson?.firstName?.[0] || ""}
+              {otherPerson?.lastName?.[0] || ""}
             </AvatarFallback>
           </Avatar>
           <div>
             <h3 className="font-medium text-gray-900">
-              {otherPerson.firstName} {otherPerson.lastName}
+              {otherPerson?.firstName} {otherPerson?.lastName}
             </h3>
             <p className="text-xs text-gray-500">
-              {isUserHost ? "Guest" : "Host"} • {conversation.property.title}
+              {isUserHost ? "Guest" : "Host"} • {conversation.property?.title}
             </p>
           </div>
         </div>
@@ -115,10 +127,12 @@ const MessageChat = ({
                 <div className="flex items-end space-x-2 max-w-[75%]">
                   {!isCurrentUser && (
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={otherPerson.avatar} />
+                      <AvatarImage
+                        src={otherPerson?.avatar || "/default-avatar.png"}
+                      />
                       <AvatarFallback>
-                        {otherPerson.firstName?.[0]}
-                        {otherPerson.lastName?.[0]}
+                        {otherPerson?.firstName?.[0] || ""}
+                        {otherPerson?.lastName?.[0] || ""}
                       </AvatarFallback>
                     </Avatar>
                   )}
@@ -131,9 +145,9 @@ const MessageChat = ({
                   >
                     <p className="text-sm">{message.content}</p>
                     <span
-                      className={`text-xs ${
+                      className={`text-xs block text-right mt-1 ${
                         isCurrentUser ? "text-wanderlust-100" : "text-gray-500"
-                      } block text-right mt-1`}
+                      }`}
                     >
                       {formatTime(message.createdAt)}
                     </span>
@@ -149,10 +163,12 @@ const MessageChat = ({
           <div className="flex justify-start">
             <div className="flex items-end space-x-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={otherPerson.avatar} />
+                <AvatarImage
+                  src={otherPerson?.avatar || "/default-avatar.png"}
+                />
                 <AvatarFallback>
-                  {otherPerson.firstName?.[0]}
-                  {otherPerson.lastName?.[0]}
+                  {otherPerson?.firstName?.[0] || ""}
+                  {otherPerson?.lastName?.[0] || ""}
                 </AvatarFallback>
               </Avatar>
               <div className="px-4 py-2 rounded-lg bg-gray-100 border border-gray-200">

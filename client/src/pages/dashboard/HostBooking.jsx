@@ -465,9 +465,9 @@ const HostBookings = () => {
           <TabsTrigger value="confirmed">
             Confirmed ({confirmedBookings.length})
           </TabsTrigger>
-          <TabsTrigger value="completed">
+          {/* <TabsTrigger value="completed">
             Completed ({completedBookings.length})
-          </TabsTrigger>
+          </TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="all">

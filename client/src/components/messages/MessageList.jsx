@@ -1,4 +1,3 @@
-// client/src/components/messages/MessageList.jsx
 import React from "react";
 import { formatTimeAgo } from "@/utils/helpers";
 import { Badge } from "@/components/ui/badge";
@@ -23,10 +22,10 @@ const MessageList = ({ conversations, onSelectConversation, selectedId }) => {
     <div className="divide-y">
       {conversations.map((conversation) => {
         // Determine if the other person is a host or guest
-        const isUserHost = user?._id === conversation.property.host._id;
+        const isUserHost = user?._id === conversation?.property?.host?._id;
         const otherPerson = isUserHost
-          ? conversation.guest
-          : conversation.property.host;
+          ? conversation?.guest
+          : conversation?.property?.host || {};
         const lastMessage = conversation.lastMessage;
 
         return (
@@ -39,17 +38,18 @@ const MessageList = ({ conversations, onSelectConversation, selectedId }) => {
           >
             <div className="flex items-start space-x-3">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={otherPerson.avatar} />
+                <AvatarImage src={otherPerson?.avatar} />
                 <AvatarFallback>
-                  {otherPerson.firstName?.[0]}
-                  {otherPerson.lastName?.[0]}
+                  {otherPerson?.firstName?.[0] || "?"}
+                  {otherPerson?.lastName?.[0] || ""}
                 </AvatarFallback>
               </Avatar>
 
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start">
                   <h4 className="font-medium text-gray-900 truncate">
-                    {otherPerson.firstName} {otherPerson.lastName}
+                    {otherPerson?.firstName || "Unknown"}{" "}
+                    {otherPerson?.lastName || "User"}
                   </h4>
                   <span className="text-xs text-gray-500">
                     {lastMessage && formatTimeAgo(lastMessage.createdAt)}
@@ -62,7 +62,8 @@ const MessageList = ({ conversations, onSelectConversation, selectedId }) => {
 
                 <div className="flex items-center mt-1">
                   <span className="text-xs text-gray-500 truncate">
-                    {conversation.property.title}
+                    {conversation?.property?.title ||
+                      "Property details unavailable"}
                   </span>
 
                   {conversation.unreadCount > 0 && (

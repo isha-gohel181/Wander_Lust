@@ -4,19 +4,19 @@ import api from "./api";
 export const bookingService = {
   // Create new booking
   createBooking: async (bookingData) => {
-    const response = await api.post("/bookings", bookingData); // ✅ FIXED
+    const response = await api.post("/bookings", bookingData);
     return response.data;
   },
 
   // Get user's bookings
   getMyBookings: async () => {
-    const response = await api.get("/bookings/my-bookings"); // ✅ FIXED
+    const response = await api.get("/bookings/my-bookings"); 
     return response.data;
   },
 
   // Get host's bookings
   getHostBookings: async () => {
-    const response = await api.get("/bookings/host-bookings"); // ✅ FIXED
+    const response = await api.get("/bookings/host-bookings"); 
     return response.data;
   },
 

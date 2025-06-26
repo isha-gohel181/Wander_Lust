@@ -1,4 +1,4 @@
-// Update client/src/hooks/useMessages.js
+//client/src/hooks/useMessages.js
 import { useState, useEffect, useCallback, useRef } from "react";
 import { messageService } from "@/services/messages";
 import { useAuth } from "./useAuth";
@@ -10,7 +10,7 @@ import {
   leaveConversation,
   sendMessage as emitSocketMessage,
   sendTypingStatus,
-} from "@/lib/socket";
+} from "@/services/socket";
 
 export const useMessages = () => {
   const { user } = useAuth();
