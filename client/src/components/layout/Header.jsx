@@ -16,6 +16,11 @@ import {
   Settings,
   Home as HomeIcon,
   MessageSquare,
+  Target,
+  FileText,
+  BookOpen,
+  Bot,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -178,6 +183,55 @@ const Header = () => {
                   >
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Host Dashboard</span>
+                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* Career Tools Section */}
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/career-dashboard");
+                      closeMenus();
+                    }}
+                  >
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    <span>Career Dashboard</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/assessment");
+                      closeMenus();
+                    }}
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    <span>Take Assessment</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/resume-analyzer");
+                      closeMenus();
+                    }}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span>Resume Analyzer</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/career-path");
+                      closeMenus();
+                    }}
+                  >
+                    <Target className="mr-2 h-4 w-4" />
+                    <span>Career Paths</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      navigate("/chat");
+                      closeMenus();
+                    }}
+                  >
+                    <Bot className="mr-2 h-4 w-4" />
+                    <span>Career Chat</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
