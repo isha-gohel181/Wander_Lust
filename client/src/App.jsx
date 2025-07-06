@@ -16,6 +16,13 @@ import Messages from "./pages/Messages";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentError from "./pages/PaymentError";
 
+// Career-focused pages
+import CareerPathPage from "./pages/CareerPathPage";
+import ResumeAnalyzerPage from "./pages/ResumeAnalyzerPage";
+import AssessmentPage from "./pages/AssessmentPage";
+import ChatPage from "./pages/ChatPage";
+import DashboardPage from "./pages/DashboardPage";
+
 function App() {
   return (
     <Layout>
@@ -82,6 +89,14 @@ function App() {
         />
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/error" element={<PaymentError />} />
+        
+        {/* Career-focused routes */}
+        <Route path="/career-path" element={<CareerPathPage />} />
+        <Route path="/resume-analyzer" element={<ResumeAnalyzerPage />} />
+        <Route path="/assessment" element={<AssessmentPage />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/career-dashboard" element={<DashboardPage />} />
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
