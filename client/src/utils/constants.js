@@ -59,5 +59,36 @@ export const BOOKING_STATUS = {
   no_show: { label: "No Show", color: "gray" },
 };
 
+// Admin Constants
+export const USER_ROLES = {
+  guest: { label: "Guest", color: "gray" },
+  host: { label: "Host", color: "blue" },
+  admin: { label: "Admin", color: "red" },
+};
+
+export const PROPERTY_STATUS = {
+  pending: { label: "Pending Review", color: "yellow" },
+  approved: { label: "Approved", color: "green" },
+  rejected: { label: "Rejected", color: "red" },
+  suspended: { label: "Suspended", color: "orange" },
+};
+
+export const REVIEW_STATUS = {
+  pending: { label: "Pending", color: "yellow" },
+  approved: { label: "Approved", color: "green" },
+  rejected: { label: "Rejected", color: "red" },
+  flagged: { label: "Flagged", color: "orange" },
+};
+
+export const ADMIN_PERMISSIONS = {
+  USER_MANAGEMENT: "user_management",
+  PROPERTY_MANAGEMENT: "property_management",
+  BOOKING_MANAGEMENT: "booking_management",
+  REVIEW_MANAGEMENT: "review_management",
+  MESSAGE_MANAGEMENT: "message_management",
+  ANALYTICS_VIEW: "analytics_view",
+  SYSTEM_SETTINGS: "system_settings",
+};
+
 export const CURRENCY_SYMBOL = "$";
 export const DEFAULT_CURRENCY = "INR";

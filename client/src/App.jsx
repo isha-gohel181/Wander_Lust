@@ -15,6 +15,9 @@ import EditProperty from "./pages/dashboard/EditProperty";
 import Messages from "./pages/Messages";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentError from "./pages/PaymentError";
+import AdminPanel from "./pages/admin/AdminPanel";
+import { useAuth } from "./hooks/useAuth";
+import AdminRoute from "./components/admin/AdminRoute";
 
 function App() {
   return (
@@ -42,6 +45,21 @@ function App() {
             <>
               <SignedIn>
                 <Dashboard />
+              </SignedIn>
+              <SignedOut>
+                <RedirectToSignIn />
+              </SignedOut>
+            </>
+          }
+        />
+        <Route
+          path="/admin/*"
+          element={
+            <>
+              <SignedIn>
+                <AdminRoute>
+                  <AdminPanel />
+                </AdminRoute>
               </SignedIn>
               <SignedOut>
                 <RedirectToSignIn />

@@ -31,4 +31,20 @@ export const authService = {
     const response = await api.delete(`/users/wishlist/${propertyId}`);
     return response.data;
   },
+
+  // Admin methods
+  updateUserRole: async (userId, role) => {
+    const response = await api.put(`/admin/users/${userId}/role`, { role });
+    return response.data;
+  },
+
+  suspendUser: async (userId) => {
+    const response = await api.put(`/admin/users/${userId}/suspend`);
+    return response.data;
+  },
+
+  unsuspendUser: async (userId) => {
+    const response = await api.put(`/admin/users/${userId}/unsuspend`);
+    return response.data;
+  },
 };

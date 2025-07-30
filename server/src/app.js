@@ -19,6 +19,7 @@ const reviewRoutes = require("./routes/reviews");
 const uploadRoutes = require("./routes/upload");
 const messageRoutes = require("./routes/messages");
 const paymentRoutes = require("./routes/payment");
+const adminRoutes = require("./routes/admin");
 
 const { testConnection } = require("./config/cloudinary");
 testConnection();
@@ -90,9 +91,10 @@ app.use("/api/payment", paymentRoutes);
 
 app.use("/api/users", requireAuth, getUserFromClerk, userRoutes);
 app.use("/api/bookings", requireAuth, getUserFromClerk, bookingRoutes);
-app.use("/api/reviews",reviewRoutes);
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/upload", requireAuth, getUserFromClerk, uploadRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/admin", requireAuth, getUserFromClerk, adminRoutes);
 
 // 404 fallback
 app.use((req, res) => {
