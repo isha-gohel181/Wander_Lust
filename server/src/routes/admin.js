@@ -5,7 +5,11 @@ const {
   updateUserRole,
   suspendUser,
   getAllProperties,
+  getPropertyStats,
   updatePropertyStatus,
+  togglePropertyFeatured,
+  deleteProperty,
+  bulkUpdateProperties,
   getAllBookings,
   getAllReviews,
   moderateReview,
@@ -25,9 +29,13 @@ router.get("/users", getAllUsers);
 router.put("/users/:userId/role", updateUserRole);
 router.put("/users/:userId/suspend", suspendUser);
 
-// Property Management
+// Property Management - Enhanced
 router.get("/properties", getAllProperties);
+router.get("/properties/stats", getPropertyStats);
 router.put("/properties/:propertyId/status", updatePropertyStatus);
+router.put("/properties/:propertyId/featured", togglePropertyFeatured);
+router.delete("/properties/:propertyId", deleteProperty);
+router.put("/properties/bulk", bulkUpdateProperties);
 
 // Booking Management
 router.get("/bookings", getAllBookings);

@@ -162,15 +162,44 @@ const suspendUser = async (req, res) => {
   }
 };
 
-// Property Management
+// Property Management - Enhanced
 const getAllProperties = async (req, res) => {
   try {
-    const { page = 1, limit = 10, status = "all" } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      status = "all",
+      propertyType = "all",
+      featured = "all",
+      search = "",
+    } = req.query;
     const skip = (page - 1) * limit;
 
     let query = {};
+
+    // Status filter
     if (status !== "all") {
       query.status = status;
+    }
+
+    // Property type filter
+    if (propertyType !== "all") {
+      query.propertyType = propertyType;
+    }
+
+    // Featured filter
+    if (featured !== "all") {
+      query.featured = featured === "true";
+    }
+
+    // Search filter
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { "location.city": { $regex: search, $options: "i" } },
+        { "location.state": { $regex: search, $options: "i" } },
+      ];
     }
 
     const [properties, total] = await Promise.all([
@@ -197,6 +226,33 @@ const getAllProperties = async (req, res) => {
   }
 };
 
+const getPropertyStats = async (req, res) => {
+  try {
+    const stats = await Promise.all([
+      Property.countDocuments({ status: "pending" }),
+      Property.countDocuments({ status: "approved" }),
+      Property.countDocuments({ status: "rejected" }),
+      Property.countDocuments({ status: "suspended" }),
+      Property.countDocuments({ featured: true }),
+      Property.aggregate([
+        { $group: { _id: "$propertyType", count: { $sum: 1 } } },
+      ]),
+    ]);
+
+    res.json({
+      pending: stats[0],
+      approved: stats[1],
+      rejected: stats[2],
+      suspended: stats[3],
+      featured: stats[4],
+      byType: stats[5],
+    });
+  } catch (error) {
+    console.error("Get property stats error:", error);
+    res.status(500).json({ message: "Failed to fetch property statistics" });
+  }
+};
+
 const updatePropertyStatus = async (req, res) => {
   try {
     const { propertyId } = req.params;
@@ -208,7 +264,11 @@ const updatePropertyStatus = async (req, res) => {
 
     const property = await Property.findByIdAndUpdate(
       propertyId,
-      { status },
+      {
+        status,
+        // Set isActive based on status
+        isActive: status === "approved",
+      },
       { new: true }
     ).populate("host", "firstName lastName email");
 
@@ -220,6 +280,83 @@ const updatePropertyStatus = async (req, res) => {
   } catch (error) {
     console.error("Update property status error:", error);
     res.status(500).json({ message: "Failed to update property status" });
+  }
+};
+
+const togglePropertyFeatured = async (req, res) => {
+  try {
+    const { propertyId } = req.params;
+    const { featured } = req.body;
+
+    const property = await Property.findByIdAndUpdate(
+      propertyId,
+      { featured },
+      { new: true }
+    ).populate("host", "firstName lastName email");
+
+    if (!property) {
+      return res.status(404).json({ message: "Property not found" });
+    }
+
+    res.json({
+      message: `Property ${featured ? "featured" : "unfeatured"} successfully`,
+      property,
+    });
+  } catch (error) {
+    console.error("Toggle property featured error:", error);
+    res.status(500).json({ message: "Failed to update featured status" });
+  }
+};
+
+const deleteProperty = async (req, res) => {
+  try {
+    const { propertyId } = req.params;
+
+    const property = await Property.findById(propertyId);
+    if (!property) {
+      return res.status(404).json({ message: "Property not found" });
+    }
+
+    // Soft delete by setting isActive to false
+    await Property.findByIdAndUpdate(propertyId, {
+      isActive: false,
+      status: "suspended",
+    });
+
+    res.json({ message: "Property deleted successfully" });
+  } catch (error) {
+    console.error("Delete property error:", error);
+    res.status(500).json({ message: "Failed to delete property" });
+  }
+};
+
+const bulkUpdateProperties = async (req, res) => {
+  try {
+    const { propertyIds, updates } = req.body;
+
+    if (!Array.isArray(propertyIds) || propertyIds.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Property IDs array is required" });
+    }
+
+    const updateData = { ...updates };
+    if (updates.status) {
+      updateData.isActive = updates.status === "approved";
+    }
+
+    const result = await Property.updateMany(
+      { _id: { $in: propertyIds } },
+      updateData
+    );
+
+    res.json({
+      message: `${result.modifiedCount} properties updated successfully`,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    console.error("Bulk update properties error:", error);
+    res.status(500).json({ message: "Failed to update properties" });
   }
 };
 
@@ -336,7 +473,11 @@ module.exports = {
   updateUserRole,
   suspendUser,
   getAllProperties,
+  getPropertyStats,
   updatePropertyStatus,
+  togglePropertyFeatured,
+  deleteProperty,
+  bulkUpdateProperties,
   getAllBookings,
   getAllReviews,
   moderateReview,

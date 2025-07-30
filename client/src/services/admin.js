@@ -30,11 +30,20 @@ export const adminService = {
     return response.data;
   },
 
-  // Property Management
-  getAllProperties: async (page = 1, limit = 10, status = "all") => {
-    const response = await api.get(
-      `/admin/properties?page=${page}&limit=${limit}&status=${status}`
-    );
+  // Property Management - Enhanced
+  getAllProperties: async (page = 1, limit = 10, filters = {}) => {
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...filters,
+    });
+
+    const response = await api.get(`/admin/properties?${queryParams}`);
+    return response.data;
+  },
+
+  getPropertyStats: async () => {
+    const response = await api.get("/admin/properties/stats");
     return response.data;
   },
 
@@ -45,8 +54,23 @@ export const adminService = {
     return response.data;
   },
 
+  togglePropertyFeatured: async (propertyId, featured) => {
+    const response = await api.put(`/admin/properties/${propertyId}/featured`, {
+      featured,
+    });
+    return response.data;
+  },
+
   deleteProperty: async (propertyId) => {
     const response = await api.delete(`/admin/properties/${propertyId}`);
+    return response.data;
+  },
+
+  bulkUpdateProperties: async (propertyIds, updates) => {
+    const response = await api.put("/admin/properties/bulk", {
+      propertyIds,
+      updates,
+    });
     return response.data;
   },
 
