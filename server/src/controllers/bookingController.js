@@ -281,10 +281,40 @@ const getBooking = async (req, res) => {
   }
 };
 
+// GET all bookings (ADMIN)
+const getAllBookings = async (req, res) => {
+  try {
+    // Optionally add filters from req.query for search/pagination
+    const { status, search, page = 1, limit = 20 } = req.query;
+    const filter = {};
+    if (status) filter.status = status;
+    if (search) {
+      filter.$or = [
+        { "property.title": { $regex: search, $options: "i" } },
+        { "guest.email": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const bookings = await Booking.find(filter)
+      .populate(BOOKING_POPULATE_OPTIONS)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const total = await Booking.countDocuments(filter);
+
+    res.json({ bookings, total });
+  } catch (error) {
+    console.error("Get all bookings error:", error);
+    res.status(500).json({ message: "Failed to fetch all bookings" });
+  }
+};
+
 module.exports = {
   createBooking,
   getMyBookings,
   getHostBookings,
+  getAllBookings,
   updateBookingStatus,
   getBooking,
 };

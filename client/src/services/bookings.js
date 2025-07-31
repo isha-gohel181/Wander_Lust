@@ -10,13 +10,13 @@ export const bookingService = {
 
   // Get user's bookings
   getMyBookings: async () => {
-    const response = await api.get("/bookings/my-bookings"); 
+    const response = await api.get("/bookings/my-bookings");
     return response.data;
   },
 
   // Get host's bookings
   getHostBookings: async () => {
-    const response = await api.get("/bookings/host-bookings"); 
+    const response = await api.get("/bookings/host-bookings");
     return response.data;
   },
 
@@ -26,6 +26,15 @@ export const bookingService = {
       status,
       reason,
     });
+    return response.data;
+  },
+
+  //get all booking
+  getAllBookings: async (params = {}) => {
+    const searchParams = new URLSearchParams(params).toString();
+    const response = await api.get(
+      `/bookings/all${searchParams ? "?" + searchParams : ""}`
+    );
     return response.data;
   },
 };

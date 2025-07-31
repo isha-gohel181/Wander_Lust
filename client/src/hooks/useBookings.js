@@ -8,7 +8,7 @@ export const useBookings = (type = "guest", options = {}) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // 🔥 FIX: Add enabled option to conditionally fetch
+  // 🔥 Add enabled option to conditionally fetch
   const { enabled = true } = options;
 
   const fetchBookings = useCallback(async () => {
@@ -22,16 +22,23 @@ export const useBookings = (type = "guest", options = {}) => {
     setError(null);
 
     try {
-      const data =
-        type === "host"
-          ? await bookingService.getHostBookings()
-          : await bookingService.getMyBookings();
+      let data;
+      if (type === "host") {
+        data = await bookingService.getHostBookings();
+      } else if (type === "admin") {
+        data = await bookingService.getAllBookings(options.queryParams || {});
+      } else {
+        data = await bookingService.getMyBookings();
+      }
+      setBookings(type === "admin" ? data.bookings : data);
 
-      setBookings(data);
     } catch (err) {
       setError(err.message);
       // Only show toast error if it's not a 403 (unauthorized) error
-      if (!err.message.includes('403') && !err.message.includes('Host access required')) {
+      if (
+        !err.message.includes("403") &&
+        !err.message.includes("Host access required")
+      ) {
         toast.error(err.message);
       }
     } finally {
