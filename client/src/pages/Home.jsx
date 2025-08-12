@@ -66,7 +66,54 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-wanderlust-50 to-wanderlust-100 py-12 md:py-20 lg:py-32">
+      <section className="relative bg-gradient-to-br from-wanderlust-50 to-wanderlust-100 py-12 md:py-20 lg:py-32 overflow-hidden">
+        {/* Background travel icons */}
+        <img
+          src="/assets/bg-icons/balloon.png"
+          alt=""
+          className="absolute top-10 left-8 w-16 opacity-20 pointer-events-none"
+          style={{
+            filter:
+              "brightness(0) saturate(100%) invert(68%) sepia(36%) saturate(618%) hue-rotate(339deg) brightness(96%) contrast(88%)",
+          }}
+        />
+        <img
+          src="/assets/bg-icons/suitcase1.png"
+          alt=""
+          className="absolute top-10 right-24 w-16 opacity-20 pointer-events-none"
+          style={{
+            filter:
+              "brightness(0) saturate(100%) invert(68%) sepia(36%) saturate(618%) hue-rotate(339deg) brightness(96%) contrast(88%)",
+          }}
+        />
+        <img
+          src="/assets/bg-icons/airplane.png"
+          alt=""
+          className="absolute top-1/3 right-8 w-16 opacity-20 pointer-events-none rotate-12"
+          style={{
+            filter:
+              "brightness(0) saturate(100%) invert(68%) sepia(36%) saturate(618%) hue-rotate(339deg) brightness(96%) contrast(88%)",
+          }}
+        />
+        <img
+          src="/assets/bg-icons/map.png"
+          alt=""
+          className="absolute bottom-12 left-12 w-16 opacity-20 pointer-events-none"
+          style={{
+            filter:
+              "brightness(0) saturate(100%) invert(68%) sepia(36%) saturate(618%) hue-rotate(339deg) brightness(96%) contrast(88%)",
+          }}
+        />
+        <img
+          src="/assets/bg-icons/palm.png"
+          alt=""
+          className="absolute bottom-10 right-12 w-16 opacity-20 pointer-events-none"
+          style={{
+            filter:
+              "brightness(0) saturate(100%) invert(68%) sepia(36%) saturate(618%) hue-rotate(339deg) brightness(96%) contrast(88%)",
+          }}
+        />
+
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto mb-8 md:mb-12">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6">
