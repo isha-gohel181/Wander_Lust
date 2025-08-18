@@ -1,4 +1,5 @@
 // client/src/pages/Messages.jsx
+
 import React, { useEffect, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import MessageList from "@/components/messages/MessageList";
