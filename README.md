@@ -161,20 +161,92 @@ npm run dev
 
 ---
 
-## 📡 API Documentation
+## 📡 Complete API Reference
 
-### Public Endpoints
-- **GET** `/api/properties` — List properties (with search filtering & pagination)
-- **GET** `/api/properties/:id` — Get single property details
-- **GET** `/api/reviews/property/:id` — Get property reviews
-- **POST** `/api/payment/webhook` — Cashfree payment callback webhook
+### 🌐 System & Webhooks
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/health` | Public | API health check & status |
+| `POST` | `/api/auth/webhook` | Public | Clerk authentication webhook listener |
 
-### Protected Endpoints (Requires Login)
-- **GET** `/api/users/profile` — Fetch logged-in user profile
-- **POST** `/api/properties` — Create a new property listing (Host)
-- **POST** `/api/bookings` — Initiate booking & payment order (Guest)
-- **POST** `/api/upload/image` — Upload listing image to Cloudinary
-- **GET** `/api/admin/analytics` — Platform metrics & moderation data (Admin)
+---
+
+### 🏠 Property Management (`/api/properties`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/properties` | Public | List & search property listings with filters |
+| `GET` | `/api/properties/:id` | Public | Get single property details |
+| `GET` | `/api/properties/host/my-properties` | Host | Get host's own property listings |
+| `POST` | `/api/properties` | Host | Create a new property listing |
+| `PUT` | `/api/properties/:id` | Host | Update an existing property listing |
+| `DELETE` | `/api/properties/:id` | Host | Delete a property listing |
+| `POST` | `/api/properties/:id/images` | Host | Upload & attach images to property |
+
+---
+
+### 📅 Bookings (`/api/bookings`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/bookings` | Guest | Create a new stay booking reservation |
+| `GET` | `/api/bookings/my-bookings` | Guest | View guest's personal booking history |
+| `GET` | `/api/bookings/host-bookings` | Host | View incoming bookings for host properties |
+| `GET` | `/api/bookings/all` | Admin | View all platform bookings |
+| `PATCH` | `/api/bookings/:id/status` | Auth | Update booking status (confirm/cancel) |
+
+---
+
+### 💳 Payments (`/api/payment`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/payment/create-order` | Guest | Generate Cashfree payment order session |
+| `POST` | `/api/payment/verify` | Guest | Verify payment signature and order status |
+| `POST` | `/api/payment/webhook` | Public | Cashfree asynchronous payment webhook |
+
+---
+
+### 💬 Messages & Chat (`/api/messages`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/messages/conversations` | Auth | List user active chat conversations |
+| `GET` | `/api/messages/conversations/:id` | Auth | Get message logs for a conversation |
+| `POST` | `/api/messages/conversations` | Auth | Start a new conversation thread |
+| `POST` | `/api/messages/conversations/:id` | Auth | Send a chat message |
+| `PUT` | `/api/messages/conversations/:id/read` | Auth | Mark conversation messages as read |
+
+---
+
+### ⭐ Reviews (`/api/reviews`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/reviews/property/:propertyId` | Public | Get all guest reviews for a property |
+| `POST` | `/api/reviews` | Guest | Submit rating and review after a stay |
+
+---
+
+### 👤 User Management (`/api/users`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/users/profile` | Auth | Fetch user profile data |
+| `PUT` | `/api/users/profile` | Auth | Update user profile details |
+
+---
+
+### 🛡️ Admin Moderation (`/api/admin`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/admin/analytics` | Admin | View overall platform metrics and stats |
+| `GET` | `/api/admin/users` | Admin | View list of all registered users |
+| `PUT` | `/api/admin/users/:userId/role` | Admin | Update user access role |
+| `PUT` | `/api/admin/users/:userId/suspend` | Admin | Suspend or unsuspend user account |
+| `GET` | `/api/admin/properties` | Admin | View & inspect all listings |
+| `GET` | `/api/admin/properties/stats` | Admin | Property stats breakdown |
+| `PUT` | `/api/admin/properties/:id/status` | Admin | Approve/Reject property status |
+| `PUT` | `/api/admin/properties/:id/featured` | Admin | Toggle property featured status |
+| `DELETE` | `/api/admin/properties/:id` | Admin | Delete non-compliant property |
+| `PUT` | `/api/admin/properties/bulk` | Admin | Bulk update properties status |
+| `GET` | `/api/admin/bookings` | Admin | View platform-wide booking logs |
+| `GET` | `/api/admin/reviews` | Admin | View user reviews for moderation |
+| `PUT` | `/api/admin/reviews/:id/moderate` | Admin | Moderate or remove abusive review |
 
 ---
 
