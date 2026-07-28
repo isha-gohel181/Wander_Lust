@@ -5,8 +5,6 @@ import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 
 const Footer = () => {
   const location = useLocation();
-
-  // Check if we're on a dashboard page (has sidebar)
   const isDashboardPage = location.pathname.startsWith("/dashboard");
 
   return (
@@ -31,129 +29,63 @@ const Footer = () => {
               Discover unique places to stay and experiences around the world.
             </p>
             <div className="flex space-x-4">
-              <Facebook className="h-5 w-5 text-gray-400 hover:text-wanderlust-500 cursor-pointer" />
-              <Twitter className="h-5 w-5 text-gray-400 hover:text-wanderlust-500 cursor-pointer" />
-              <Instagram className="h-5 w-5 text-gray-400 hover:text-wanderlust-500 cursor-pointer" />
-              <Youtube className="h-5 w-5 text-gray-400 hover:text-wanderlust-500 cursor-pointer" />
+              {[Facebook, Twitter, Instagram, Youtube].map((Icon, idx) => (
+                <Icon
+                  key={idx}
+                  className="h-5 w-5 text-gray-400 hover:text-wanderlust-500 cursor-pointer"
+                />
+              ))}
             </div>
           </div>
 
-          {/* Support */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Support</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  to="/help"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/safety"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Safety Information
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/cancellation"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Cancellation Options
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/contact"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Contact Us
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Community */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Community</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  to="/blog"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/events"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Events
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/refer"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Refer Friends
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/careers"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Careers
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Hosting */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Hosting</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  to="/become-host"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Become a Host
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/host-resources"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Host Resources
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/host-community"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Host Community
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/responsible-hosting"
-                  className="text-gray-600 hover:text-wanderlust-500"
-                >
-                  Responsible Hosting
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* Footer Sections */}
+          {[
+            {
+              title: "Support",
+              links: [
+                { to: "/help", label: "Help Center" },
+                { to: "/safety", label: "Safety Information" },
+                { to: "/cancellation", label: "Cancellation Options" },
+                { to: "/contact", label: "Contact Us" },
+              ],
+            },
+            {
+              title: "Community",
+              links: [
+                { to: "/blog", label: "Blog" },
+                { to: "/events", label: "Events" },
+                { to: "/refer", label: "Refer Friends" },
+                { to: "/careers", label: "Careers" },
+              ],
+            },
+            {
+              title: "Hosting",
+              links: [
+                { to: "/become-host", label: "Become a Host" },
+                { to: "/host-resources", label: "Host Resources" },
+                { to: "/host-community", label: "Host Community" },
+                { to: "/responsible-hosting", label: "Responsible Hosting" },
+              ],
+            },
+          ].map((section, idx) => (
+            <div key={idx} className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {section.title}
+              </h3>
+              <ul className="space-y-2">
+                {section.links.map(({ to, label }) => (
+                  <li key={to}>
+                    <Link
+                      to={to}
+                      className="text-gray-600 hover:text-wanderlust-500"
+                    >
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center">
@@ -161,26 +93,20 @@ const Footer = () => {
             <span className="text-sm text-gray-600">
               © 2024 Wanderlust. All rights reserved.
             </span>
-            <Link
-              to="/privacy"
-              className="text-sm text-gray-600 hover:text-wanderlust-500"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              to="/terms"
-              className="text-sm text-gray-600 hover:text-wanderlust-500"
-            >
-              Terms of Service
-            </Link>
-            <Link
-              to="/sitemap"
-              className="text-sm text-gray-600 hover:text-wanderlust-500"
-            >
-              Sitemap
-            </Link>
+            {[
+              { to: "/privacy", label: "Privacy Policy" },
+              { to: "/terms", label: "Terms of Service" },
+              { to: "/sitemap", label: "Sitemap" },
+            ].map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className="text-sm text-gray-600 hover:text-wanderlust-500"
+              >
+                {label}
+              </Link>
+            ))}
           </div>
-
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600">🌍 English (IN)</span>
             <span className="text-sm text-gray-600">₹ INR</span>
