@@ -2,6 +2,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
+import BrandLogo from "./BrandLogo";
 
 const Footer = () => {
   const location = useLocation();
@@ -17,14 +18,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-wanderlust-500 to-wanderlust-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">W</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">
-                Wanderlust
-              </span>
-            </div>
+            <BrandLogo showTagline />
             <p className="text-gray-600">
               Discover unique places to stay and experiences around the world.
             </p>

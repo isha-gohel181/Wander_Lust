@@ -1,6 +1,6 @@
 //client/src/components/layout/Header.jsx
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   SignedIn,
   SignedOut,
@@ -29,15 +29,36 @@ import {
 } from "@/components/ui/dropdown-menu";
 import SearchBar from "../search/SearchBar";
 import { useMessages } from "@/hooks/useMessages";
+import BrandLogo from "./BrandLogo";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false); // mobile menu
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false); // app menu
   const [clerkMenuOpen, setClerkMenuOpen] = useState(false); // clerk menu
+  const [isScrolled, setIsScrolled] = useState(false);
+
   const { user } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
   const { unreadCount } = useMessages();
+
+  const isHome = location.pathname === "/";
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isTransparent = isHome && !isScrolled && !isMenuOpen && !isSearchOpen;
 
   // Ensure only one menu is open at a time (desktop)
   const openProfileMenu = () => {
@@ -54,36 +75,69 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isTransparent
+          ? "bg-transparent border-b border-transparent shadow-none"
+          : "bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm"
+      }`}
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-wanderlust-500 to-wanderlust-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">W</span>
-            </div>
-            <span className="text-xl lg:text-2xl font-bold text-gray-900">
-              Wanderlust
-            </span>
+          <Link to="/" className="flex items-center" aria-label="Wanderlust home">
+            <BrandLogo size="sm" />
           </Link>
 
-          {/* Desktop Search Bar */}
-          <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
-            <SearchBar />
-          </div>
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-8 text-sm font-medium transition-colors duration-200 text-gray-900">
+            <Link to="/" className="font-semibold transition-colors text-gray-900 hover:text-wanderlust-500">
+              Home
+            </Link>
+            <Link to="/search" className="transition-colors text-gray-900 hover:text-wanderlust-500">
+              Blog
+            </Link>
+            <Link to="/search?category=all" className="transition-colors text-gray-900 hover:text-wanderlust-500">
+              About Us
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`flex items-center space-x-1 transition-colors cursor-pointer outline-none text-gray-900 hover:text-wanderlust-500`}
+                >
+                  <span>More</span>
+                  <span className="text-xs">▾</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-48 z-50">
+                <DropdownMenuItem onClick={() => navigate("/search")}>
+                  Destinations
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/wishlist")}>
+                  Wishlist
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/bookings")}>
+                  My Bookings
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  Become a Host
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </nav>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-4">
+          {/* Desktop Navigation Actions */}
+          <div className="hidden lg:flex items-center space-x-3">
             <SignedOut>
               <SignInButton mode="modal">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="font-medium transition-colors text-gray-900 hover:text-gray-900">
                   Sign In
                 </Button>
               </SignInButton>
               <SignInButton mode="modal">
                 <Button
                   size="sm"
-                  className="bg-wanderlust-500 hover:bg-wanderlust-600"
+                  className="bg-wanderlust-500 hover:bg-wanderlust-600 text-white font-medium rounded-full px-6 py-2 transition-all shadow-sm"
                 >
                   Sign Up
                 </Button>
@@ -92,7 +146,7 @@ const Header = () => {
 
             <SignedIn>
               <Link to="/dashboard">
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" className="font-medium transition-colors text-gray-900">
                   Become a Host
                 </Button>
               </Link>
@@ -109,19 +163,14 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="relative h-8 w-8"
+                    className={`relative h-8 w-8 transition-colors text-gray-900`}
                     aria-label="Open app menu"
                     onClick={() => {
                       if (profileMenuOpen) setProfileMenuOpen(false);
                       else openProfileMenu();
                     }}
                   >
-                    <Menu className="h-4 w-4"/>
-                    {/* <img
-                      src={user?.imageUrl}
-                      alt="Profile"
-                      className="w-6 h-6 rounded-full"
-                    /> */}
+                    <Menu className="h-4 w-4" />
                     {unreadCount > 0 && (
                       <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-wanderlust-500 text-white">
                         {unreadCount}
@@ -205,7 +254,7 @@ const Header = () => {
               variant="ghost"
               size="sm"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="p-2"
+              className={`p-2 transition-colors text-gray-900`}
             >
               <Search className="h-5 w-5" />
             </Button>
@@ -214,7 +263,7 @@ const Header = () => {
               variant="ghost"
               size="sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 relative"
+              className={`p-2 relative transition-colors text-gray-900`}
             >
               {isMenuOpen ? (
                 <X className="h-5 w-5" />
