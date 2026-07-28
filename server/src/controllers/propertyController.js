@@ -2,6 +2,7 @@
 const Property = require("../models/Property");
 const User = require("../models/User");
 const { uploadImage, deleteImage } = require("../config/cloudinary");
+const { syncPropertyKnowledge } = require("../services/ragService");
 
 // Get all properties with search and filters
 const getProperties = async (req, res) => {
@@ -160,6 +161,7 @@ const createProperty = async (req, res) => {
 
     const property = new Property(propertyData);
     await property.save();
+    await syncPropertyKnowledge();
 
     // Add property to user's properties array
     user.properties.push(property._id);
@@ -204,6 +206,8 @@ const updateProperty = async (req, res) => {
       runValidators: true,
     }).populate("host", "firstName lastName avatar");
 
+    await syncPropertyKnowledge();
+
     res.json(updatedProperty);
   } catch (error) {
     console.error("Update property error:", error);
@@ -242,6 +246,7 @@ const deleteProperty = async (req, res) => {
     }
 
     await Property.findByIdAndDelete(id);
+    await syncPropertyKnowledge();
 
     // Remove property from user's properties array
     user.properties = user.properties.filter(
@@ -316,6 +321,7 @@ const uploadPropertyImages = async (req, res) => {
     // Add new images to property
     property.images.push(...uploadedImages);
     await property.save();
+    await syncPropertyKnowledge();
 
     res.json({
       message: "Images uploaded successfully",

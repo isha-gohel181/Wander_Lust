@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import Wishlist from "@/pages/Wishlist";
 import EditProperty from "./pages/dashboard/EditProperty";
 import Messages from "./pages/Messages";
+import Assistant from "./pages/Assistant";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentError from "./pages/PaymentError";
 import AdminPanel from "./pages/admin/AdminPanel";
@@ -94,6 +95,7 @@ function App() {
           }
         />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/assistant" element={<Assistant />} />
         <Route
           path="/dashboard/properties/:id/edit"
           element={<EditProperty />}

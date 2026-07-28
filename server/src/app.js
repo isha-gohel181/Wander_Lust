@@ -18,6 +18,7 @@ const bookingRoutes = require("./routes/bookings");
 const reviewRoutes = require("./routes/reviews");
 const uploadRoutes = require("./routes/upload");
 const messageRoutes = require("./routes/messages");
+const assistantRoutes = require("./routes/assistant");
 const paymentRoutes = require("./routes/payment");
 const adminRoutes = require("./routes/admin");
 
@@ -88,6 +89,7 @@ app.get("/health", (req, res) => {
 // ROUTES
 app.use("/api/properties", propertyRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/assistant", assistantRoutes);
 
 app.use("/api/users", requireAuth, getUserFromClerk, userRoutes);
 app.use("/api/bookings", requireAuth, getUserFromClerk, bookingRoutes);

@@ -17,6 +17,7 @@ import {
   Settings,
   Home as HomeIcon,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -95,11 +96,11 @@ const Header = () => {
               Home
             </Link>
             <Link to="/search" className="transition-colors text-gray-900 hover:text-wanderlust-500">
-              Blog
+              Destinations
             </Link>
-            <Link to="/search?category=all" className="transition-colors text-gray-900 hover:text-wanderlust-500">
+            <a href="/#about" className="transition-colors text-gray-900 hover:text-wanderlust-500">
               About Us
-            </Link>
+            </a>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -121,6 +122,10 @@ const Header = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/dashboard")}>
                   Become a Host
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/assistant") }>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Travel Assistant
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -352,6 +357,16 @@ const Header = () => {
                   >
                     <Heart className="mr-2 h-4 w-4" />
                     Wishlist
+                  </Button>
+                </Link>
+                <Link to="/assistant" onClick={() => setIsMenuOpen(false)}>
+                  <Button
+                    variant="ghost"
+                    className="justify-start w-full"
+                    size="sm"
+                  >
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Travel Assistant
                   </Button>
                 </Link>
                 <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>

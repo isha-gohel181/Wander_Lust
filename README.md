@@ -14,7 +14,7 @@
 
 ## 🚀 Overview
 
-**WanderLust** is a production-style full-stack vacation rental marketplace built with the **MERN Stack**. It connects guests, hosts, and administrators through a complete marketplace experience including property discovery, interactive booking workflows, secure payments via Cashfree, real-time guest-host chat with Socket.IO, user reviews, cloud asset management with Cloudinary, and admin moderation controls.
+**WanderLust** is a production-style full-stack vacation rental marketplace built with the **MERN Stack**. It connects guests, hosts, and administrators through a complete marketplace experience including property discovery, interactive booking workflows, secure payments via Cashfree, real-time guest-host chat with Socket.IO, user reviews, cloud asset management with Cloudinary, a Gemini-powered RAG travel assistant, and admin moderation controls.
 
 ---
 
@@ -57,6 +57,7 @@
 - **Real-Time Engine**: Socket.IO WebSockets
 - **File Uploads**: Multer, Cloudinary
 - **Payments**: Cashfree SDK & Webhooks
+- **AI Assistant**: Gemini API with retrieval-augmented generation (RAG)
 - **Security**: Helmet, Express Rate Limit, CORS, Morgan
 
 ---
@@ -136,6 +137,10 @@ CASHFREE_APP_ID=your_cashfree_app_id
 CASHFREE_SECRET_KEY=your_cashfree_secret_key
 CASHFREE_NOTIFY_URL=http://localhost:10000/api/payment/webhook
 CASHFREE_RETURN_URL=http://localhost:5173/booking/success
+
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.5-flash
+GEMINI_EMBEDDING_MODEL=text-embedding-004
 ```
 
 ---
@@ -212,6 +217,13 @@ npm run dev
 | `POST` | `/api/messages/conversations` | Auth | Start a new conversation thread |
 | `POST` | `/api/messages/conversations/:id` | Auth | Send a chat message |
 | `PUT` | `/api/messages/conversations/:id/read` | Auth | Mark conversation messages as read |
+
+---
+
+### 🤖 Travel Assistant (`/api/assistant`)
+| Method | Endpoint | Access | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/assistant/chat` | Public | Ask the RAG assistant questions about stays, filters, and booking help |
 
 ---
 
