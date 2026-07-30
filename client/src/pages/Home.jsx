@@ -7,6 +7,7 @@ import { useProperties } from "@/hooks/useProperties";
 import { useWishlist } from "@/hooks/useWishlist";
 
 import HeroSearchBar from "@/components/search/HeroSearchBar";
+import TestimonialsSection from "@/components/reviews/TestimonialsSection";
 
 const Home = () => {
   const { properties, loading } = useProperties({
@@ -355,6 +356,9 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
 
       {/* Host CTA Section */}
       <section className="py-10 md:py-16 lg:py-20 bg-wanderlust-50">
